@@ -18,6 +18,13 @@ concept_buttons = [
         color=ButtonColorChoices.CYAN,
         permissions=['netbox_rack_concept.add_rackconcept']
     ),
+    PluginMenuButton(
+        link='plugins:netbox_rack_concept:rackconcept_merge',
+        title=_('Merge'),
+        icon_class='mdi mdi-call-merge',
+        color=ButtonColorChoices.PURPLE,
+        permissions=['netbox_rack_concept.add_rackconcept']
+    ),
 ]
 
 device_buttons = [

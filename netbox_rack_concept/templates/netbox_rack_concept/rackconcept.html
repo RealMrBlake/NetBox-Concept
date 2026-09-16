@@ -15,6 +15,9 @@
     <a href="{% url 'plugins:netbox_rack_concept:rackconcept_clone_concept' pk=object.pk %}" class="btn btn-outline-secondary">
       <i class="mdi mdi-content-duplicate"></i> {% trans "Clone concept" %}
     </a>
+    <a href="{% url 'plugins:netbox_rack_concept:rackconcept_merge' %}?concept_bottom={{ object.pk }}" class="btn btn-outline-secondary">
+      <i class="mdi mdi-call-merge"></i> {% trans "Merge with another" %}
+    </a>
   {% endif %}
   {% if perms.dcim.add_rack %}
     <a href="{% url 'plugins:netbox_rack_concept:rackconcept_deploy' pk=object.pk %}" class="btn btn-primary">

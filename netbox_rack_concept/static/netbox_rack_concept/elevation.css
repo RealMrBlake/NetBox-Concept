@@ -37,9 +37,23 @@
     stroke-width: 1;
 }
 
+.concept-elevation .device-image {
+    pointer-events: none;
+}
+
+.concept-elevation .device-label-bg {
+    fill: #000000;
+    fill-opacity: 0.45;
+    pointer-events: none;
+}
+
 .concept-elevation .device-label {
     font-size: 11px;
     pointer-events: none;
+}
+
+.concept-elevation .device-label.on-image {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .concept-elevation .opposite-hint {

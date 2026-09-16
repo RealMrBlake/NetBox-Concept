@@ -12,8 +12,9 @@ Wenn die Planung steht, wird das Konzept per Knopfdruck in echte NetBox-Objekte
 
 | Weg | Wo |
 |---|---|
-| Echtes Rack → Konzept | Button **„Copy to concept"** auf der Rack-Detailseite |
+| Echtes Rack → Konzept | Button **„Copy to concept"** auf der Rack-Detailseite. Größe des Konzept-Racks (Breite, Höhe, Startunit) ist dabei frei wählbar; Geräte, die in der gewählten Größe keinen Platz mehr finden, werden ausgelassen und als Warnung gemeldet |
 | Konzept → Konzept (Variante) | Button **„Clone concept"** auf der Konzept-Detailseite |
+| 2 Konzepte → 1 größeres Konzept | Button **„Merge"** im Menü bzw. **„Merge with another"** auf der Konzept-Detailseite — stapelt z.B. zwei halbhohe Racks zu einem vollen; das obere Konzept wird um die Höhe des unteren nach oben verschoben, beide Quellen bleiben unverändert |
 | Konzept → echte Racks (n-fach) | Button **„Deploy to NetBox"**, mit Namensschema `DC1-R{n:02d}` |
 | Konzept von Hand anlegen | Menü **Rack Concepts → Rack Concepts → +** |
 
@@ -21,6 +22,9 @@ Dazu:
 
 * **Elevation mit Drag & Drop** – Geräte per Maus verschieben, serverseitig validiert.
   Ein ungültiger Zug wird abgelehnt und ändert nichts.
+* **Geräte mit Bild und Text** – ist am Gerätetyp ein Front-/Rear-Bild hinterlegt, wird
+  es im Elevation-Block angezeigt, mit halbtransparentem Label darüber; ohne Bild bleibt
+  es bei der reinen Farbfläche mit Text.
 * **Teilbreiten** (1/1, 1/2, 1/3, 1/4 plus horizontale Slot-Position), passend zum
   Teilbreiten-Feature von `netbox_utilities`.
 * **Mandant und Mandantengruppe** an Konzept und an jedem geplanten Gerät.
@@ -159,8 +163,9 @@ Basis-Pfad: `/api/plugins/rack-concepts/`
 |---|---|---|
 | `GET/POST` | `concepts/` | Konzepte auflisten und anlegen |
 | `GET/PATCH/DELETE` | `concepts/{id}/` | Einzelnes Konzept |
-| `POST` | `concepts/copy-from-rack/` | Echtes Rack in ein Konzept kopieren |
+| `POST` | `concepts/copy-from-rack/` | Echtes Rack in ein Konzept kopieren (mit `override_width`/`override_u_height`/`override_starting_unit`) |
 | `POST` | `concepts/{id}/clone/` | Konzept duplizieren |
+| `POST` | `concepts/merge/` | Zwei Konzepte zu einem größeren stapeln (`concept_bottom`, `concept_top`) |
 | `POST` | `concepts/{id}/deploy/` | Konzept ausrollen (`dry_run` möglich) |
 | `GET` | `concepts/{id}/elevation/` | Berechnete Elevation als JSON |
 | `GET/POST` | `devices/` | Geplante Geräte |

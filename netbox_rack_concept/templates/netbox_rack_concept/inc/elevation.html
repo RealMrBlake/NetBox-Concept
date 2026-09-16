@@ -15,11 +15,11 @@
     {# Unit rows and legend #}
     {% for unit in elevation.units %}
       <g class="unit">
-        <rect x="{{ elevation.legend_width }}" y="{{ unit.y }}"
+        <rect x="{{ elevation.rack_x }}" y="{{ unit.y }}"
               width="{{ elevation.rack_width }}" height="{{ unit.height }}"
               class="unit-slot"
               data-unit="{{ unit.number }}"></rect>
-        <text x="{{ elevation.legend_width }}" y="{{ unit.y }}" dx="-4" dy="15"
+        <text x="{{ elevation.rack_x }}" y="{{ unit.y }}" dx="-4" dy="15"
               class="unit-label" text-anchor="end">{{ unit.number }}</text>
       </g>
     {% endfor %}
@@ -32,13 +32,31 @@
          data-u-height="{{ block.device.effective_u_height }}"
          data-width-fraction="{{ block.device.width_fraction }}">
         <a href="{{ block.device.get_absolute_url }}">
+          {% if block.image %}
+            <clipPath id="concept-block-{{ elevation.face }}-{{ block.device.pk }}">
+              <rect x="{{ block.x }}" y="{{ block.y }}" width="{{ block.width }}" height="{{ block.height }}" rx="2"></rect>
+            </clipPath>
+          {% endif %}
           <rect x="{{ block.x }}" y="{{ block.y }}" width="{{ block.width }}" height="{{ block.height }}"
                 rx="2" fill="#{{ block.color }}"
                 fill-opacity="{% if block.opposite %}0.35{% else %}1{% endif %}"
                 class="device-rect"></rect>
+          {% if block.image %}
+            <image href="{{ block.image.url }}" x="{{ block.x }}" y="{{ block.y }}"
+                   width="{{ block.width }}" height="{{ block.height }}"
+                   preserveAspectRatio="xMidYMid slice"
+                   clip-path="url(#concept-block-{{ elevation.face }}-{{ block.device.pk }})"
+                   opacity="{% if block.opposite %}0.35{% else %}1{% endif %}"
+                   class="device-image"></image>
+          {% endif %}
           {% if block.show_text %}
+            {% if block.image %}
+              <rect x="{{ block.x }}" y="{{ block.y }}" width="{{ block.width }}" height="16"
+                    class="device-label-bg"></rect>
+            {% endif %}
             <text x="{{ block.x }}" y="{{ block.y }}" dy="15" dx="6"
-                  fill="#{{ block.text_color }}" class="device-label">
+                  fill="{% if block.image %}#ffffff{% else %}#{{ block.text_color }}{% endif %}"
+                  class="device-label {% if block.image %}on-image{% endif %}">
               {{ block.label }}{% if block.opposite %} <tspan class="opposite-hint">({% trans "rear" %})</tspan>{% endif %}
             </text>
           {% endif %}
@@ -47,7 +65,7 @@
       </g>
     {% endfor %}
 
-    <rect x="{{ elevation.legend_width }}" y="6"
+    <rect x="{{ elevation.rack_x }}" y="6"
           width="{{ elevation.rack_width }}" height="{{ elevation.height|add:'-12' }}"
           class="rack-frame" fill="none"></rect>
   </svg>

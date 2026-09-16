@@ -13,8 +13,8 @@ from .. import deploy as deploy_utils
 from ..elevation import get_elevations
 from ..models import ConceptDevice, RackConcept
 from .serializers import (
-    ConceptDeploySerializer, ConceptDeviceSerializer, RackConceptCloneSerializer, RackConceptSerializer,
-    RackCopySerializer,
+    ConceptDeploySerializer, ConceptDeviceSerializer, MergeConceptsSerializer, RackConceptCloneSerializer,
+    RackConceptSerializer, RackCopySerializer,
 )
 
 __all__ = (
@@ -41,7 +41,7 @@ class RackConceptViewSet(NetBoxModelViewSet):
         tenant = data.get('tenant')
 
         try:
-            concept = deploy_utils.copy_rack_to_concept(
+            concept, warnings = deploy_utils.copy_rack_to_concept(
                 rack=rack,
                 name=data['name'],
                 status=data['status'],
@@ -50,15 +50,17 @@ class RackConceptViewSet(NetBoxModelViewSet):
                 description=data['description'],
                 include_devices=data['include_devices'],
                 include_device_names=data['include_device_names'],
+                override_width=data.get('override_width'),
+                override_u_height=data.get('override_u_height'),
+                override_starting_unit=data.get('override_starting_unit'),
             )
         except ValidationError as exc:
             return Response({'errors': exc.message_dict if hasattr(exc, 'message_dict') else exc.messages},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(
-            RackConceptSerializer(concept, context={'request': request}).data,
-            status=status.HTTP_201_CREATED
-        )
+        result = RackConceptSerializer(concept, context={'request': request}).data
+        result['warnings'] = warnings
+        return Response(result, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'])
     def clone(self, request, pk=None):
@@ -84,6 +86,35 @@ class RackConceptViewSet(NetBoxModelViewSet):
             RackConceptSerializer(new_concept, context={'request': request}).data,
             status=status.HTTP_201_CREATED
         )
+
+    @action(detail=False, methods=['post'])
+    def merge(self, request):
+        """Stack two concepts (e.g. two half-height racks) into one taller one."""
+        serializer = MergeConceptsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        tenant = data.get('tenant')
+
+        try:
+            merged, warnings = deploy_utils.merge_concepts(
+                concept_bottom=data['concept_bottom'],
+                concept_top=data['concept_top'],
+                name=data['name'],
+                status=data['status'],
+                tenant=tenant,
+                tenant_group=tenant.group if tenant else None,
+                width=data.get('width'),
+                u_height=data.get('u_height'),
+                starting_unit=data['starting_unit'],
+                description=data['description'],
+            )
+        except ValidationError as exc:
+            return Response({'errors': exc.message_dict if hasattr(exc, 'message_dict') else exc.messages},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        result = RackConceptSerializer(merged, context={'request': request}).data
+        result['warnings'] = warnings
+        return Response(result, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'])
     def deploy(self, request, pk=None):

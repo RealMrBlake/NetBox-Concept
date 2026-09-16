@@ -1,7 +1,9 @@
 """
-The three copy paths: rack -> concept, concept -> concept, concept -> rack(s).
+The four copy paths: rack -> concept, concept -> concept, concept -> rack(s), and
+concept + concept -> one merged concept.
 """
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.translation import gettext as _
 
@@ -15,6 +17,7 @@ __all__ = (
     'clone_concept',
     'copy_rack_to_concept',
     'deploy_concept',
+    'merge_concepts',
     'validate_deployment',
 )
 
@@ -34,8 +37,15 @@ def _config():
 
 @transaction.atomic
 def copy_rack_to_concept(rack, name, status=ConceptStatusChoices.STATUS_DRAFT, tenant=None, tenant_group=None,
-                         description='', include_devices=True, include_device_names=True):
-    """Snapshot a real rack, and optionally its contents, into a new blueprint."""
+                         description='', include_devices=True, include_device_names=True,
+                         override_width=None, override_u_height=None, override_starting_unit=None):
+    """
+    Snapshot a real rack, and optionally its contents, into a new blueprint. Passing an
+    override lets the concept end up a different size than the source rack (e.g. to
+    plan "what if we had a taller one"); devices that no longer fit are skipped and
+    reported back as warnings rather than aborting the whole copy.
+    Returns (concept, warnings).
+    """
     concept = RackConcept(
         name=name,
         status=status,
@@ -55,16 +65,31 @@ def copy_rack_to_concept(rack, name, status=ConceptStatusChoices.STATUS_DRAFT, t
             value = getattr(rack.rack_type, field, None)
         if value not in (None, ''):
             setattr(concept, field, value)
+
+    has_override = any(v is not None for v in (override_width, override_u_height, override_starting_unit))
+    if has_override:
+        # The concept's own geometry fields are ignored on deploy as long as rack_type
+        # is set (NetBox derives geometry from the type). Since the override is the
+        # whole point here, it must not be silently overruled by the source's type.
+        concept.rack_type = None
+    if override_width:
+        concept.width = override_width
+    if override_u_height:
+        concept.u_height = override_u_height
+    if override_starting_unit:
+        concept.starting_unit = override_starting_unit
+
     concept.full_clean()
     concept.save()
 
+    warnings = []
     if include_devices:
         devices = Device.objects.filter(rack=rack, position__isnull=False).select_related(
             'device_type', 'role', 'platform', 'tenant'
         )
         for device in devices:
             fraction, horizontal = read_partial_width(device)
-            ConceptDevice.objects.create(
+            concept_device = ConceptDevice(
                 concept=concept,
                 name=(device.name or '') if include_device_names else '',
                 status=ConceptDeviceStatusChoices.STATUS_EXISTING,
@@ -79,8 +104,90 @@ def copy_rack_to_concept(rack, name, status=ConceptStatusChoices.STATUS_DRAFT, t
                 serial=device.serial if include_device_names else '',
                 source_device=device,
             )
+            if has_override:
+                try:
+                    concept_device.full_clean()
+                except ValidationError:
+                    warnings.append(_(
+                        '%(device)s (U%(position)s) does not fit in the chosen size and was left out.'
+                    ) % {'device': device, 'position': device.position})
+                    continue
+            concept_device.save()
 
-    return concept
+    return concept, warnings
+
+
+#
+# RackConcept + RackConcept -> RackConcept (stacked)
+#
+
+@transaction.atomic
+def merge_concepts(concept_bottom, concept_top, name, status=ConceptStatusChoices.STATUS_DRAFT, tenant=None,
+                   tenant_group=None, width=None, u_height=None, starting_unit=1, description=''):
+    """
+    Stack two blueprints into one taller one - e.g. two half-height racks combined into
+    a full-height rack. concept_bottom's devices keep their position; concept_top's are
+    shifted up by concept_bottom's height. Neither source concept is modified.
+    Returns (merged_concept, warnings).
+    """
+    offset = concept_bottom.u_height
+    total_height = u_height or (concept_bottom.u_height + concept_top.u_height)
+
+    merged = RackConcept(
+        name=name,
+        status=status,
+        tenant=tenant,
+        tenant_group=tenant_group,
+        description=description,
+        width=width or concept_bottom.width,
+        u_height=total_height,
+        starting_unit=starting_unit,
+        form_factor=concept_bottom.form_factor,
+        airflow=concept_bottom.airflow,
+        default_site=concept_bottom.default_site or concept_top.default_site,
+        default_location=concept_bottom.default_location or concept_top.default_location,
+        rack_role=concept_bottom.rack_role or concept_top.rack_role,
+    )
+    merged.full_clean()
+    merged.save()
+
+    warnings = []
+
+    def _copy_devices(source, shift):
+        for device in source.devices.all():
+            concept_device = ConceptDevice(
+                concept=merged,
+                name=device.name,
+                label=device.label,
+                status=device.status,
+                device_type=device.device_type,
+                role=device.role,
+                platform=device.platform,
+                tenant=device.tenant,
+                position=(device.position + shift) if device.position is not None else None,
+                face=device.face,
+                width_fraction=device.width_fraction,
+                horizontal_position=device.horizontal_position,
+                u_height=device.u_height,
+                is_full_depth=device.is_full_depth,
+                serial=device.serial,
+                description=device.description,
+                comments=device.comments,
+                source_device=device.source_device,
+            )
+            try:
+                concept_device.full_clean()
+            except ValidationError:
+                warnings.append(_(
+                    '%(device)s from %(concept)s does not fit at its shifted position and was left out.'
+                ) % {'device': device, 'concept': source})
+                continue
+            concept_device.save()
+
+    _copy_devices(concept_bottom, 0)
+    _copy_devices(concept_top, offset)
+
+    return merged, warnings
 
 
 #

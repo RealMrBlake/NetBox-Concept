@@ -21,6 +21,7 @@ __all__ = (
     'ConceptDeviceFilterForm',
     'ConceptDeviceForm',
     'ConceptDeviceImportForm',
+    'MergeConceptsForm',
     'RackConceptBulkEditForm',
     'RackConceptCloneForm',
     'RackConceptFilterForm',
@@ -318,13 +319,107 @@ class RackCopyForm(forms.Form):
         label=_('Keep device names'),
         help_text=_('Unchecked, only the device type and position are copied')
     )
+    override_width = forms.ChoiceField(
+        choices=(('', _('Same as rack')),) + tuple(RackWidthChoices),
+        required=False,
+        label=_('Width')
+    )
+    override_u_height = forms.IntegerField(
+        required=False,
+        min_value=1,
+        max_value=100,
+        label=_('Height (U)'),
+        help_text=_('Leave empty to keep the rack\'s own height. Devices that no longer fit are left out.')
+    )
+    override_starting_unit = forms.IntegerField(
+        required=False,
+        min_value=1,
+        label=_('Starting unit'),
+        help_text=_('Leave empty to keep the rack\'s own starting unit')
+    )
     description = forms.CharField(max_length=200, required=False)
 
     fieldsets = (
         FieldSet('name', 'status', 'description', name=_('Concept')),
         FieldSet('tenant_group', 'tenant', name=_('Tenancy')),
         FieldSet('include_devices', 'include_device_names', name=_('Content')),
+        FieldSet(
+            'override_width', 'override_u_height', 'override_starting_unit',
+            name=_('Concept size (optional)')
+        ),
     )
+
+    def clean_override_width(self):
+        value = self.cleaned_data['override_width']
+        return int(value) if value else None
+
+
+class MergeConceptsForm(forms.Form):
+    """Stack two blueprints (e.g. two half-height racks) into one taller concept."""
+    name = forms.CharField(
+        label=_('New concept name'),
+        max_length=100
+    )
+    status = forms.ChoiceField(
+        choices=ConceptStatusChoices,
+        initial=ConceptStatusChoices.STATUS_DRAFT
+    )
+    tenant_group = DynamicModelChoiceField(
+        queryset=TenantGroup.objects.all(),
+        required=False,
+        label=_('Tenant group')
+    )
+    tenant = DynamicModelChoiceField(
+        queryset=Tenant.objects.all(),
+        required=False,
+        query_params={'group_id': '$tenant_group'},
+        label=_('Tenant')
+    )
+    concept_bottom = DynamicModelChoiceField(
+        queryset=RackConcept.objects.all(),
+        label=_('Bottom concept'),
+        help_text=_('Keeps its planned positions unchanged')
+    )
+    concept_top = DynamicModelChoiceField(
+        queryset=RackConcept.objects.all(),
+        label=_('Top concept'),
+        help_text=_("Its devices are shifted up by the bottom concept's height")
+    )
+    width = forms.ChoiceField(
+        choices=RackWidthChoices,
+        initial=RackWidthChoices.WIDTH_19IN,
+        label=_('Width of the combined rack')
+    )
+    u_height = forms.IntegerField(
+        required=False,
+        min_value=1,
+        max_value=100,
+        label=_('Height (U)'),
+        help_text=_('Leave empty to use the sum of both heights')
+    )
+    starting_unit = forms.IntegerField(
+        initial=1,
+        min_value=1,
+        label=_('Starting unit')
+    )
+    description = forms.CharField(max_length=200, required=False)
+
+    fieldsets = (
+        FieldSet('name', 'status', 'description', name=_('Concept')),
+        FieldSet('tenant_group', 'tenant', name=_('Tenancy')),
+        FieldSet('concept_bottom', 'concept_top', name=_('Sources')),
+        FieldSet('width', 'u_height', 'starting_unit', name=_('Combined size')),
+    )
+
+    def clean_width(self):
+        return int(self.cleaned_data['width'])
+
+    def clean(self):
+        cleaned = super().clean()
+        bottom, top = cleaned.get('concept_bottom'), cleaned.get('concept_top')
+        if bottom and top and bottom.pk == top.pk:
+            raise forms.ValidationError(_('Choose two different concepts to merge.'))
+        return cleaned
 
 
 class RackConceptCloneForm(forms.Form):

@@ -16,6 +16,9 @@ UNIT_HEIGHT = 22
 RACK_WIDTH = 240
 LEGEND_WIDTH = 32
 MARGIN = 6
+# x where the rack frame itself starts. Used by the frame, every unit slot and every
+# device block alike, so none of them can drift out of alignment with the others.
+RACK_X = MARGIN + LEGEND_WIDTH
 
 DEFAULT_COLOR = 'c0c0c0'
 RESERVED_COLOR = 'e9ecef'
@@ -44,8 +47,9 @@ class ElevationUnit:
 class ElevationBlock:
     """One rendered device rectangle."""
 
-    def __init__(self, device, x, y, width, height, opposite=False):
+    def __init__(self, device, face, x, y, width, height, opposite=False):
         self.device = device
+        self.face = face
         self.x = x
         self.y = y
         self.width = width
@@ -80,6 +84,19 @@ class ElevationBlock:
     def show_text(self):
         return self.height >= 14
 
+    @property
+    def image(self):
+        """
+        The device type's image for the face this block is drawn on, i.e. what's
+        physically visible from that side of the rack - not the device's own mounting
+        face, which only matters for half-depth devices occupying one face at a time.
+        """
+        device_type = self.device.device_type
+        if device_type is None:
+            return None
+        image = device_type.front_image if self.face == DeviceFaceChoices.FACE_FRONT else device_type.rear_image
+        return image if image else None
+
 
 class Elevation:
     """Everything the template needs to draw one face of a concept rack."""
@@ -92,7 +109,8 @@ class Elevation:
 
         self.legend_width = LEGEND_WIDTH
         self.rack_width = RACK_WIDTH
-        self.width = LEGEND_WIDTH + RACK_WIDTH + MARGIN * 2
+        self.rack_x = RACK_X
+        self.width = RACK_X + RACK_WIDTH + MARGIN
         self.height = concept.u_height * UNIT_HEIGHT + MARGIN * 2
 
         self._build_units()
@@ -128,7 +146,7 @@ class Elevation:
 
             bottom, top = span
             lane_start, lane_end = device.lane_span
-            x = MARGIN + LEGEND_WIDTH + (lane_start / LANE_COUNT) * RACK_WIDTH
+            x = RACK_X + (lane_start / LANE_COUNT) * RACK_WIDTH
             width = ((lane_end - lane_start) / LANE_COUNT) * RACK_WIDTH
 
             if self.concept.desc_units:
@@ -138,6 +156,7 @@ class Elevation:
 
             self.blocks.append(ElevationBlock(
                 device=device,
+                face=self.face,
                 x=x,
                 y=y,
                 width=width,

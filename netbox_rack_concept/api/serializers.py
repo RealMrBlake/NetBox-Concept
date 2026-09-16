@@ -4,6 +4,7 @@ from dcim.api.serializers import (
     DeviceRoleSerializer, DeviceTypeSerializer, LocationSerializer, PlatformSerializer, RackRoleSerializer,
     RackSerializer, RackTypeSerializer, SiteSerializer,
 )
+from dcim.choices import RackWidthChoices
 from dcim.models import Location, Rack, Site
 from netbox.api.serializers import NetBoxModelSerializer
 from tenancy.api.serializers import TenantGroupSerializer, TenantSerializer
@@ -93,6 +94,9 @@ class RackCopySerializer(serializers.Serializer):
     description = serializers.CharField(max_length=200, required=False, allow_blank=True, default='')
     include_devices = serializers.BooleanField(default=True)
     include_device_names = serializers.BooleanField(default=True)
+    override_width = serializers.ChoiceField(choices=RackWidthChoices, required=False, allow_null=True, default=None)
+    override_u_height = serializers.IntegerField(min_value=1, max_value=100, required=False, allow_null=True, default=None)
+    override_starting_unit = serializers.IntegerField(min_value=1, required=False, allow_null=True, default=None)
 
 
 class RackConceptCloneSerializer(serializers.Serializer):
@@ -101,6 +105,24 @@ class RackConceptCloneSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=ConceptStatusChoices, default=ConceptStatusChoices.STATUS_DRAFT)
     tenant = serializers.PrimaryKeyRelatedField(queryset=Tenant.objects.all(), required=False, allow_null=True)
     include_devices = serializers.BooleanField(default=True)
+
+
+class MergeConceptsSerializer(serializers.Serializer):
+    """POST body for stacking two concepts into one taller one."""
+    concept_bottom = serializers.PrimaryKeyRelatedField(queryset=RackConcept.objects.all())
+    concept_top = serializers.PrimaryKeyRelatedField(queryset=RackConcept.objects.all())
+    name = serializers.CharField(max_length=100)
+    status = serializers.ChoiceField(choices=ConceptStatusChoices, default=ConceptStatusChoices.STATUS_DRAFT)
+    tenant = serializers.PrimaryKeyRelatedField(queryset=Tenant.objects.all(), required=False, allow_null=True)
+    width = serializers.ChoiceField(choices=RackWidthChoices, required=False, allow_null=True, default=None)
+    u_height = serializers.IntegerField(min_value=1, max_value=100, required=False, allow_null=True, default=None)
+    starting_unit = serializers.IntegerField(min_value=1, default=1)
+    description = serializers.CharField(max_length=200, required=False, allow_blank=True, default='')
+
+    def validate(self, attrs):
+        if attrs['concept_bottom'].pk == attrs['concept_top'].pk:
+            raise serializers.ValidationError('concept_bottom and concept_top must be different concepts.')
+        return attrs
 
 
 class ConceptDeploySerializer(serializers.Serializer):

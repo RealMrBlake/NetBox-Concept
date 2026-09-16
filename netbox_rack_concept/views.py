@@ -22,6 +22,7 @@ from .models import ConceptDevice, RackConcept
 
 __all__ = (
     'ConceptDeviceView',
+    'MergeConceptsView',
     'RackConceptView',
 )
 
@@ -201,7 +202,7 @@ class RackCopyView(ObjectPermissionRequiredMixin, View):
 
         if form.is_valid():
             try:
-                concept = deploy.copy_rack_to_concept(
+                concept, warnings = deploy.copy_rack_to_concept(
                     rack=rack,
                     name=form.cleaned_data['name'],
                     status=form.cleaned_data['status'],
@@ -210,10 +211,15 @@ class RackCopyView(ObjectPermissionRequiredMixin, View):
                     description=form.cleaned_data['description'],
                     include_devices=form.cleaned_data['include_devices'],
                     include_device_names=form.cleaned_data['include_device_names'],
+                    override_width=form.cleaned_data['override_width'],
+                    override_u_height=form.cleaned_data['override_u_height'],
+                    override_starting_unit=form.cleaned_data['override_starting_unit'],
                 )
             except ValidationError as exc:
                 form.add_error(None, exc)
             else:
+                for warning in warnings:
+                    messages.warning(request, warning)
                 messages.success(request, _('Created concept %(concept)s from rack %(rack)s.') % {
                     'concept': concept, 'rack': rack
                 })
@@ -224,6 +230,58 @@ class RackCopyView(ObjectPermissionRequiredMixin, View):
             'form': form,
             'device_count': rack.devices.filter(position__isnull=False).count(),
             'return_url': rack.get_absolute_url(),
+        })
+
+
+class MergeConceptsView(ObjectPermissionRequiredMixin, View):
+    """Stack two blueprints (e.g. two half-height racks) into one taller concept."""
+    queryset = RackConcept.objects.all()
+
+    def get_required_permission(self):
+        return 'netbox_rack_concept.add_rackconcept'
+
+    def get(self, request):
+        form = forms.MergeConceptsForm(initial={
+            'concept_bottom': request.GET.get('concept_bottom'),
+            'concept_top': request.GET.get('concept_top'),
+        })
+        return render(request, 'netbox_rack_concept/concept_merge.html', {
+            'form': form,
+            'return_url': reverse('plugins:netbox_rack_concept:rackconcept_list'),
+        })
+
+    def post(self, request):
+        form = forms.MergeConceptsForm(request.POST)
+
+        if form.is_valid():
+            try:
+                merged, warnings = deploy.merge_concepts(
+                    concept_bottom=form.cleaned_data['concept_bottom'],
+                    concept_top=form.cleaned_data['concept_top'],
+                    name=form.cleaned_data['name'],
+                    status=form.cleaned_data['status'],
+                    tenant=form.cleaned_data['tenant'],
+                    tenant_group=form.cleaned_data['tenant_group'],
+                    width=form.cleaned_data['width'],
+                    u_height=form.cleaned_data['u_height'],
+                    starting_unit=form.cleaned_data['starting_unit'],
+                    description=form.cleaned_data['description'],
+                )
+            except ValidationError as exc:
+                form.add_error(None, exc)
+            else:
+                for warning in warnings:
+                    messages.warning(request, warning)
+                messages.success(request, _('Created %(merged)s by merging %(bottom)s and %(top)s.') % {
+                    'merged': merged,
+                    'bottom': form.cleaned_data['concept_bottom'],
+                    'top': form.cleaned_data['concept_top'],
+                })
+                return redirect(merged.get_absolute_url())
+
+        return render(request, 'netbox_rack_concept/concept_merge.html', {
+            'form': form,
+            'return_url': reverse('plugins:netbox_rack_concept:rackconcept_list'),
         })
 
 
