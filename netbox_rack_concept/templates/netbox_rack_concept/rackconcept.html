@@ -140,6 +140,37 @@
           {% if perms.netbox_rack_concept.change_conceptdevice %}
             <span class="badge text-bg-secondary">{% trans "Drag devices to move them" %}</span>
           {% endif %}
+          <div class="dropdown">
+            <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="mdi mdi-download"></i> {% trans "Export" %}
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><h6 class="dropdown-header">{% trans "Front" %}</h6></li>
+              <li>
+                <a class="dropdown-item" href="{% url 'plugins:netbox_rack_concept:rackconcept_export_svg' pk=object.pk %}?face=front">SVG</a>
+              </li>
+              <li>
+                <a class="dropdown-item concept-export-png" href="#"
+                   data-svg-url="{% url 'plugins:netbox_rack_concept:rackconcept_export_svg' pk=object.pk %}?face=front"
+                   data-filename="{{ object.name|slugify }}-front.png">PNG</a>
+              </li>
+              <li><h6 class="dropdown-header">{% trans "Rear" %}</h6></li>
+              <li>
+                <a class="dropdown-item" href="{% url 'plugins:netbox_rack_concept:rackconcept_export_svg' pk=object.pk %}?face=rear">SVG</a>
+              </li>
+              <li>
+                <a class="dropdown-item concept-export-png" href="#"
+                   data-svg-url="{% url 'plugins:netbox_rack_concept:rackconcept_export_svg' pk=object.pk %}?face=rear"
+                   data-filename="{{ object.name|slugify }}-rear.png">PNG</a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <a class="dropdown-item" href="{% url 'plugins:netbox_rack_concept:rackconcept_export_drawio' pk=object.pk %}">
+                  {% trans "Draw.io (.drawio)" %}
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
       <div class="card-body">
@@ -172,4 +203,5 @@
 {% block javascript %}
   {{ block.super }}
   <script src="{% static 'netbox_rack_concept/elevation.js' %}"></script>
+  <script src="{% static 'netbox_rack_concept/export.js' %}"></script>
 {% endblock %}

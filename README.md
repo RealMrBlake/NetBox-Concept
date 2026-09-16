@@ -44,6 +44,11 @@ Dazu:
   unverkabelten Komponente wird sie mit einem Concept Cable verbunden. Ein „Add
   Components"-Dropdown (genau wie am echten Gerät) legt neue Komponenten pro Typ an —
   nötig für Platzhalter ohne Gerätetyp, die nichts zum Syncen haben.
+* **Export** – Button **„Export"** über der Elevation: Front bzw. Rear jeweils als
+  eigenständige **SVG**- oder **PNG**-Datei, sowie das ganze Konzept (beide Seiten) als
+  **Draw.io**-Diagramm (`.drawio`, per Datei > Öffnen oder Extras > Diagramm bearbeiten
+  in diagrams.net einlesbar). PNG wird komplett im Browser aus dem SVG gerastert —
+  dafür ist keine zusätzliche Bildbibliothek auf dem Server nötig.
 * Vollständige REST-API, Filter, CSV-Import/-Export, Bulk-Edit, Changelog, Journal,
   Tags, Custom Fields und globale Suche — wie bei jedem Core-Objekt.
 

@@ -116,6 +116,7 @@ class Elevation:
         self.rack_width = RACK_WIDTH
         self.rack_x = RACK_X
         self.rack_right = RACK_X + RACK_WIDTH
+        self.rack_center_x = RACK_X + RACK_WIDTH / 2
         self.width = RACK_X + RACK_WIDTH + MARGIN
         self.height = concept.u_height * UNIT_HEIGHT + MARGIN * 2
 

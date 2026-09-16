@@ -1,0 +1,86 @@
+{% load i18n %}
+{% load l10n %}
+{% comment %}
+  Everything inside one face's <svg>...</svg> - shared by the on-page elevation
+  (inc/elevation.html) and the standalone SVG export (elevation_export.html), so the
+  two never drift apart. Localization is switched off because SVG coordinates must use
+  a dot as the decimal separator whatever the UI language is.
+{% endcomment %}
+{% localize off %}
+{# Unit rows and legend. An empty unit becomes a click target for adding a device
+   here, exactly like a real rack's elevation. #}
+{% for unit in elevation.units %}
+  <g class="unit">
+    {% if not unit.occupied and can_add_device %}
+      <a href="{% url 'plugins:netbox_rack_concept:conceptdevice_add' %}?concept={{ elevation.concept.pk }}&amp;position={{ unit.number }}&amp;face={{ elevation.face }}&amp;return_url={{ elevation.concept.get_absolute_url }}">
+        <rect x="{{ elevation.rack_x }}" y="{{ unit.y }}"
+              width="{{ elevation.rack_width }}" height="{{ unit.height }}"
+              class="unit-slot free"
+              data-unit="{{ unit.number }}"></rect>
+        <text x="{{ elevation.rack_center_x }}" y="{{ unit.y }}" dy="15"
+              class="add-device-hint" text-anchor="middle">+ {% trans "Add device" %}</text>
+      </a>
+    {% else %}
+      <rect x="{{ elevation.rack_x }}" y="{{ unit.y }}"
+            width="{{ elevation.rack_width }}" height="{{ unit.height }}"
+            class="unit-slot"
+            data-unit="{{ unit.number }}"></rect>
+    {% endif %}
+    <text x="{{ elevation.rack_x }}" y="{{ unit.y }}" dx="-4" dy="15"
+          class="unit-label" text-anchor="end">{{ unit.number }}</text>
+  </g>
+{% endfor %}
+
+{# Devices #}
+{% for block in elevation.blocks %}
+  <g class="device-block {% if block.opposite %}opposite{% endif %}"
+     data-device-id="{{ block.device.pk }}"
+     data-position="{{ block.device.position }}"
+     data-u-height="{{ block.device.effective_u_height }}"
+     data-width-fraction="{{ block.device.width_fraction }}">
+    <a href="{{ block.device.get_absolute_url }}">
+      <rect x="{{ block.x }}" y="{{ block.y }}" width="{{ block.width }}" height="{{ block.height }}"
+            rx="2" fill="#{{ block.color }}"
+            fill-opacity="{% if block.opposite %}0.35{% else %}1{% endif %}"
+            class="device-rect"></rect>
+      {% comment %}
+        The plain label is always in the markup, image or not - toggling "images
+        only" just layers the (opaque) image on top of it, exactly like NetBox's
+        own rack elevation does. That way there is one code path, not two.
+      {% endcomment %}
+      {% if block.show_text %}
+        <text x="{{ block.x }}" y="{{ block.y }}" dy="15" dx="6"
+              fill="#{{ block.text_color }}" class="device-label">
+          {{ block.label }}{% if block.opposite %} <tspan class="opposite-hint">({% trans "rear" %})</tspan>{% endif %}
+        </text>
+      {% endif %}
+      {% if block.image %}
+        <clipPath id="concept-block-{{ elevation.face }}-{{ block.device.pk }}">
+          <rect x="{{ block.x }}" y="{{ block.y }}" width="{{ block.width }}" height="{{ block.height }}" rx="2"></rect>
+        </clipPath>
+        {# Absolute when we have a request (the export - a file that outlives the page
+           it came from needs a URL that still resolves once it's saved elsewhere). #}
+        <image href="{% if request %}{{ request.scheme }}://{{ request.get_host }}{% endif %}{{ block.image.url }}"
+               x="{{ block.x }}" y="{{ block.y }}"
+               width="{{ block.width }}" height="{{ block.height }}"
+               preserveAspectRatio="xMidYMid slice"
+               clip-path="url(#concept-block-{{ elevation.face }}-{{ block.device.pk }})"
+               opacity="{% if block.opposite %}0.35{% else %}1{% endif %}"
+               class="device-image"></image>
+        {% if block.show_text %}
+          {# Outlined white-on-black text, drawn as a stroke pass then a fill pass, so it reads over any image without a background box. #}
+          <text x="{{ block.x }}" y="{{ block.y }}" dy="15" dx="6"
+                class="device-image-label device-image-label-stroke">{{ block.label }}</text>
+          <text x="{{ block.x }}" y="{{ block.y }}" dy="15" dx="6"
+                class="device-image-label device-image-label-fill">{{ block.label }}</text>
+        {% endif %}
+      {% endif %}
+      <title>{{ block.label }}{% if block.sublabel %} &middot; {{ block.sublabel }}{% endif %} &middot; U{{ block.device.position }}</title>
+    </a>
+  </g>
+{% endfor %}
+
+<rect x="{{ elevation.rack_x }}" y="6"
+      width="{{ elevation.rack_width }}" height="{{ elevation.height|add:'-12' }}"
+      class="rack-frame" fill="none"></rect>
+{% endlocalize %}

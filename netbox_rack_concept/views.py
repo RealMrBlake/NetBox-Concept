@@ -6,18 +6,22 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count
-from django.http import HttpResponseForbidden, JsonResponse
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils.text import slugify
 from django.utils.translation import gettext as _
 from django.views.generic import View
 
+from dcim.choices import DeviceFaceChoices
 from dcim.models import Rack
 from netbox.views import generic
 from utilities.views import ObjectPermissionRequiredMixin, ViewTab, register_model_view
 
 from . import components, deploy, filtersets, forms, tables
 from .choices import ConceptComponentTypeChoices
+from .drawio import build_drawio
 from .elevation import get_elevations
 from .models import ConceptCable, ConceptComponent, ConceptDevice, RackConcept
 
@@ -60,6 +64,45 @@ class RackConceptView(generic.ObjectView):
             'rear_elevation': rear,
             'deployments_table': deployments,
         }
+
+
+@register_model_view(RackConcept, 'export_svg', path='export/svg')
+class RackConceptExportSVGView(ObjectPermissionRequiredMixin, View):
+    """Download one face's elevation as a standalone SVG file."""
+    queryset = RackConcept.objects.all()
+
+    def get_required_permission(self):
+        return 'netbox_rack_concept.view_rackconcept'
+
+    def get(self, request, pk):
+        concept = get_object_or_404(self.queryset.restrict(request.user, 'view'), pk=pk)
+        face = request.GET.get('face')
+        if face not in (DeviceFaceChoices.FACE_FRONT, DeviceFaceChoices.FACE_REAR):
+            face = DeviceFaceChoices.FACE_FRONT
+
+        front, rear = get_elevations(concept)
+        elevation = front if face == DeviceFaceChoices.FACE_FRONT else rear
+
+        svg = render_to_string('netbox_rack_concept/elevation_export.html', {'elevation': elevation}, request=request)
+        response = HttpResponse(svg, content_type='image/svg+xml')
+        response['Content-Disposition'] = f'attachment; filename="{slugify(concept.name)}-{face}.svg"'
+        return response
+
+
+@register_model_view(RackConcept, 'export_drawio', path='export/drawio')
+class RackConceptExportDrawioView(ObjectPermissionRequiredMixin, View):
+    """Download both faces of a concept as one draw.io (diagrams.net) diagram."""
+    queryset = RackConcept.objects.all()
+
+    def get_required_permission(self):
+        return 'netbox_rack_concept.view_rackconcept'
+
+    def get(self, request, pk):
+        concept = get_object_or_404(self.queryset.restrict(request.user, 'view'), pk=pk)
+        xml = build_drawio(concept)
+        response = HttpResponse(xml, content_type='application/xml')
+        response['Content-Disposition'] = f'attachment; filename="{slugify(concept.name)}.drawio"'
+        return response
 
 
 @register_model_view(RackConcept, 'devices')
