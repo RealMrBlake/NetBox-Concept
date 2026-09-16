@@ -48,10 +48,35 @@ funktioniert weiter, und es landet eine Warnung im NetBox-Log.
 
 ## Installation
 
+### Per pip direkt aus Git
+
+```bash
+source /opt/netbox/venv/bin/activate
+pip install git+https://git.mrblake.cc/MrBlake/NetBox-Concept.git
+```
+
+Für eine bestimmte Version oder einen Branch/Commit `@<ref>` anhängen, z.B.:
+
+```bash
+pip install git+https://git.mrblake.cc/MrBlake/NetBox-Concept.git@v0.1.0
+```
+
+Damit die Installation auch nach einem `upgrade.sh`/`python3 -m pip install -r
+requirements.txt`-Lauf erhalten bleibt, den Eintrag zusätzlich in
+`/opt/netbox/local_requirements.txt` aufnehmen:
+
+```
+git+https://git.mrblake.cc/MrBlake/NetBox-Concept.git
+```
+
+### Aus lokalem Checkout
+
 ```bash
 source /opt/netbox/venv/bin/activate
 pip install /pfad/zu/netbox-rack-concept
 ```
+
+### Aktivieren
 
 In `configuration.py`:
 
@@ -72,6 +97,22 @@ python manage.py migrate
 python manage.py collectstatic --no-input
 sudo systemctl restart netbox netbox-rq
 ```
+
+## Update
+
+```bash
+source /opt/netbox/venv/bin/activate
+pip install --upgrade --force-reinstall --no-deps git+https://git.mrblake.cc/MrBlake/NetBox-Concept.git
+cd /opt/netbox/netbox
+python manage.py migrate
+python manage.py collectstatic --no-input
+sudo systemctl restart netbox netbox-rq
+```
+
+`--force-reinstall --no-deps` ist nötig, weil pip bei einer git-URL ohne Versionsänderung
+sonst annimmt, es sei nichts Neues zu holen. Wer stattdessen mit `local_requirements.txt`
+und `upgrade.sh` arbeitet, bekommt Updates darüber automatisch mit, sobald sich der
+referenzierte Branch/Tag ändert.
 
 > Sollte `migrate` die mitgelieferte Migration nicht anwenden können, weil sich in eurer
 > NetBox-Installation Basisfelder unterscheiden: `netbox_rack_concept/migrations/0001_initial.py`
