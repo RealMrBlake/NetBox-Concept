@@ -1,7 +1,7 @@
 from django.utils.translation import gettext_lazy as _
 
+from netbox.choices import ButtonColorChoices
 from netbox.plugins import PluginMenu, PluginMenuButton, PluginMenuItem
-from utilities.choices import ButtonColorChoices
 
 concept_buttons = [
     PluginMenuButton(
