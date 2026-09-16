@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.translation import gettext as _
 
-from dcim.choices import RackWidthChoices
+from dcim.choices import DeviceFaceChoices, RackWidthChoices
 from dcim.models import Device, Rack
 
 from . import components
@@ -113,7 +113,7 @@ def copy_rack_to_concept(rack, name, status=ConceptStatusChoices.STATUS_DRAFT, t
                 platform=device.platform,
                 tenant=device.tenant,
                 position=device.position,
-                face=device.face,
+                face=device.face or DeviceFaceChoices.FACE_FRONT,
                 width_fraction=fraction,
                 horizontal_position=horizontal,
                 serial=device.serial if include_device_names else '',
@@ -187,7 +187,7 @@ def merge_concepts(concept_bottom, concept_top, name, status=ConceptStatusChoice
                 platform=device.platform,
                 tenant=device.tenant,
                 position=(device.position + shift) if device.position is not None else None,
-                face=device.face,
+                face=device.face or DeviceFaceChoices.FACE_FRONT,
                 width_fraction=device.width_fraction,
                 horizontal_position=device.horizontal_position,
                 u_height=device.u_height,
@@ -245,7 +245,7 @@ def merge_racks_to_concept(rack_bottom, rack_top, name, status=ConceptStatusChoi
         u_height=total_height,
         starting_unit=starting_unit,
         form_factor=_rack_geometry(rack_bottom, 'form_factor') or '',
-        airflow=rack_bottom.airflow,
+        airflow=rack_bottom.airflow or '',
         default_site=rack_bottom.site,
         default_location=rack_bottom.location,
         rack_role=rack_bottom.role,
@@ -274,7 +274,7 @@ def merge_racks_to_concept(rack_bottom, rack_top, name, status=ConceptStatusChoi
                 platform=device.platform,
                 tenant=device.tenant,
                 position=device.position + shift,
-                face=device.face,
+                face=device.face or DeviceFaceChoices.FACE_FRONT,
                 width_fraction=fraction,
                 horizontal_position=horizontal,
                 serial=device.serial if include_device_names else '',
@@ -338,7 +338,7 @@ def clone_concept(concept, name, status=ConceptStatusChoices.STATUS_DRAFT, tenan
                 platform=device.platform,
                 tenant=device.tenant,
                 position=device.position,
-                face=device.face,
+                face=device.face or DeviceFaceChoices.FACE_FRONT,
                 width_fraction=device.width_fraction,
                 horizontal_position=device.horizontal_position,
                 u_height=device.u_height,
