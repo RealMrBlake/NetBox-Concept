@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.1
+
+- Rework PNG export: instead of rasterizing the SVG export via `<img>`/`<canvas>`
+  (fragile - any malformed SVG or cross-origin image reference could fail the whole
+  export with an opaque error), draw the elevation directly onto a `<canvas>` from
+  plain pixel geometry (`export/data/`), the same approach netbox-topology-views uses.
+  Device type images are fetched individually as same-origin blobs; a single image
+  failing to load only drops that picture instead of aborting the export. Added a
+  combined front+rear PNG option to the Export menu.
+
 ## 0.2.0
 
 - Fix: several multi-line `{# ... #}` template comments rendered as literal text on

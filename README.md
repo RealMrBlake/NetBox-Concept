@@ -45,10 +45,13 @@ Dazu:
   Components"-Dropdown (genau wie am echten Gerät) legt neue Komponenten pro Typ an —
   nötig für Platzhalter ohne Gerätetyp, die nichts zum Syncen haben.
 * **Export** – Button **„Export"** über der Elevation: Front bzw. Rear jeweils als
-  eigenständige **SVG**- oder **PNG**-Datei, sowie das ganze Konzept (beide Seiten) als
-  **Draw.io**-Diagramm (`.drawio`, per Datei > Öffnen oder Extras > Diagramm bearbeiten
-  in diagrams.net einlesbar). PNG wird komplett im Browser aus dem SVG gerastert —
-  dafür ist keine zusätzliche Bildbibliothek auf dem Server nötig.
+  eigenständige **SVG**-Datei, als **PNG** (einzeln oder beide Seiten zusammen), sowie
+  das ganze Konzept als **Draw.io**-Diagramm (`.drawio`, per Datei > Öffnen oder Extras
+  > Diagramm bearbeiten in diagrams.net einlesbar). PNG wird direkt im Browser auf ein
+  `<canvas>` gezeichnet (derselbe Ansatz wie bei netbox-topology-views) statt ein SVG zu
+  rastern — Gerätetyp-Bilder werden dafür einzeln per `fetch()` als Blob geladen; scheitert
+  eines davon (z.B. Netzwerkfehler), fehlt nur dieses eine Bild im Export, der Rest bleibt
+  unversehrt. Für PNG ist keine zusätzliche Bildbibliothek auf dem Server nötig.
 * Vollständige REST-API, Filter, CSV-Import/-Export, Bulk-Edit, Changelog, Journal,
   Tags, Custom Fields und globale Suche — wie bei jedem Core-Objekt.
 

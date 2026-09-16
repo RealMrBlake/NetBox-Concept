@@ -89,6 +89,61 @@ class RackConceptExportSVGView(ObjectPermissionRequiredMixin, View):
         return response
 
 
+@register_model_view(RackConcept, 'export_data', path='export/data')
+class RackConceptExportDataView(ObjectPermissionRequiredMixin, View):
+    """
+    The elevation's full pixel geometry as JSON, for the PNG export: it draws straight
+    onto a <canvas> from this rather than rasterizing an SVG image, so a device type
+    image only ever reaches the canvas via a same-origin fetch()->blob()->Image, never
+    through an <img src="blob:svg..."> whose validity (and therefore whether it even
+    decodes) depends on the SVG being perfectly well-formed.
+    """
+    queryset = RackConcept.objects.all()
+
+    def get_required_permission(self):
+        return 'netbox_rack_concept.view_rackconcept'
+
+    def get(self, request, pk):
+        concept = get_object_or_404(self.queryset.restrict(request.user, 'view'), pk=pk)
+        front, rear = get_elevations(concept)
+
+        def serialize(elevation):
+            return {
+                'width': elevation.width,
+                'height': elevation.height,
+                'rack_x': elevation.rack_x,
+                'rack_width': elevation.rack_width,
+                'face_label': elevation.face_label.title(),
+                'units': [
+                    {'number': unit.number, 'y': unit.y, 'height': unit.height}
+                    for unit in elevation.units
+                ],
+                'blocks': [
+                    {
+                        'x': block.x,
+                        'y': block.y,
+                        'width': block.width,
+                        'height': block.height,
+                        'color': block.color,
+                        'text_color': block.text_color,
+                        'label': block.label,
+                        'opposite': block.opposite,
+                        'show_text': block.show_text,
+                        'image_url': (
+                            request.build_absolute_uri(block.image.url) if block.image else None
+                        ),
+                    }
+                    for block in elevation.blocks
+                ],
+            }
+
+        return JsonResponse({
+            'name': concept.name,
+            'front': serialize(front),
+            'rear': serialize(rear),
+        })
+
+
 @register_model_view(RackConcept, 'export_drawio', path='export/drawio')
 class RackConceptExportDrawioView(ObjectPermissionRequiredMixin, View):
     """Download both faces of a concept as one draw.io (diagrams.net) diagram."""

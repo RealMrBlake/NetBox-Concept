@@ -145,13 +145,21 @@
               <i class="mdi mdi-download"></i> {% trans "Export" %}
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
+              <li>
+                <a class="dropdown-item concept-export-png" href="#"
+                   data-data-url="{% url 'plugins:netbox_rack_concept:rackconcept_export_data' pk=object.pk %}"
+                   data-faces="both"
+                   data-filename="{{ object.name|slugify }}.png">PNG ({% trans "Front" %} + {% trans "Rear" %})</a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
               <li><h6 class="dropdown-header">{% trans "Front" %}</h6></li>
               <li>
                 <a class="dropdown-item" href="{% url 'plugins:netbox_rack_concept:rackconcept_export_svg' pk=object.pk %}?face=front">SVG</a>
               </li>
               <li>
                 <a class="dropdown-item concept-export-png" href="#"
-                   data-svg-url="{% url 'plugins:netbox_rack_concept:rackconcept_export_svg' pk=object.pk %}?face=front"
+                   data-data-url="{% url 'plugins:netbox_rack_concept:rackconcept_export_data' pk=object.pk %}"
+                   data-faces="front"
                    data-filename="{{ object.name|slugify }}-front.png">PNG</a>
               </li>
               <li><h6 class="dropdown-header">{% trans "Rear" %}</h6></li>
@@ -160,7 +168,8 @@
               </li>
               <li>
                 <a class="dropdown-item concept-export-png" href="#"
-                   data-svg-url="{% url 'plugins:netbox_rack_concept:rackconcept_export_svg' pk=object.pk %}?face=rear"
+                   data-data-url="{% url 'plugins:netbox_rack_concept:rackconcept_export_data' pk=object.pk %}"
+                   data-faces="rear"
                    data-filename="{{ object.name|slugify }}-rear.png">PNG</a>
               </li>
               <li><hr class="dropdown-divider"></li>
