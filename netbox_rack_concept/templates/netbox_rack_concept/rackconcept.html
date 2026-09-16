@@ -1,0 +1,168 @@
+{% extends 'generic/object.html' %}
+{% load i18n %}
+{% load helpers %}
+{% load render_table from django_tables2 %}
+{% load static %}
+
+{% block head %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'netbox_rack_concept/elevation.css' %}">
+{% endblock %}
+
+{% block extra_controls %}
+  {{ block.super }}
+  {% if perms.netbox_rack_concept.add_rackconcept %}
+    <a href="{% url 'plugins:netbox_rack_concept:rackconcept_clone_concept' pk=object.pk %}" class="btn btn-outline-secondary">
+      <i class="mdi mdi-content-duplicate"></i> {% trans "Clone concept" %}
+    </a>
+  {% endif %}
+  {% if perms.dcim.add_rack %}
+    <a href="{% url 'plugins:netbox_rack_concept:rackconcept_deploy' pk=object.pk %}" class="btn btn-primary">
+      <i class="mdi mdi-rocket-launch-outline"></i> {% trans "Deploy to NetBox" %}
+    </a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+  <div class="col col-md-6">
+    <div class="card">
+      <h2 class="card-header">{% trans "Rack Concept" %}</h2>
+      <table class="table table-hover attr-table">
+        <tr>
+          <th scope="row">{% trans "Name" %}</th>
+          <td>{{ object.name }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Status" %}</th>
+          <td>{% badge object.get_status_display bg_color=object.get_status_color %}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Description" %}</th>
+          <td>{{ object.description|placeholder }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Tenant group" %}</th>
+          <td>{{ object.tenant_group|linkify|placeholder }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Tenant" %}</th>
+          <td>{{ object.tenant|linkify|placeholder }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Copied from" %}</th>
+          <td>{{ object.source_rack|linkify|placeholder }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Planned devices" %}</th>
+          <td>{{ object.devices.count }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Space utilization" %}</th>
+          <td>{% utilization_graph object.utilization %}</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2 class="card-header">{% trans "Geometry" %}</h2>
+      <table class="table table-hover attr-table">
+        <tr>
+          <th scope="row">{% trans "Rack type" %}</th>
+          <td>{{ object.rack_type|linkify|placeholder }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Form factor" %}</th>
+          <td>{{ object.get_form_factor_display|placeholder }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Width" %}</th>
+          <td>{{ object.get_width_display }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Height" %}</th>
+          <td>{{ object.u_height }}U</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Starting unit" %}</th>
+          <td>U{{ object.starting_unit }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Descending units" %}</th>
+          <td>{% checkmark object.desc_units %}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Airflow" %}</th>
+          <td>{{ object.get_airflow_display|placeholder }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Mounting depth" %}</th>
+          <td>{{ object.mounting_depth|placeholder }}</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2 class="card-header">{% trans "Deployment defaults" %}</h2>
+      <table class="table table-hover attr-table">
+        <tr>
+          <th scope="row">{% trans "Site" %}</th>
+          <td>{{ object.default_site|linkify|placeholder }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Location" %}</th>
+          <td>{{ object.default_location|linkify|placeholder }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Rack role" %}</th>
+          <td>{{ object.rack_role|linkify|placeholder }}</td>
+        </tr>
+      </table>
+    </div>
+
+    {% include 'inc/panels/comments.html' %}
+  </div>
+
+  <div class="col col-md-6">
+    <div class="card">
+      <h2 class="card-header">
+        {% trans "Elevation" %}
+        {% if perms.netbox_rack_concept.change_conceptdevice %}
+          <span class="badge text-bg-secondary float-end">{% trans "Drag devices to move them" %}</span>
+        {% endif %}
+      </h2>
+      <div class="card-body">
+        <div class="d-flex justify-content-around flex-wrap"
+             id="concept-elevations"
+             data-reorder-url="{% url 'plugins:netbox_rack_concept:rackconcept_reorder' pk=object.pk %}"
+             data-editable="{% if perms.netbox_rack_concept.change_conceptdevice %}true{% else %}false{% endif %}"
+             data-starting-unit="{{ object.starting_unit }}"
+             data-u-height="{{ object.u_height }}"
+             data-desc-units="{{ object.desc_units|yesno:'true,false' }}">
+          {% include 'netbox_rack_concept/inc/elevation.html' with elevation=front_elevation %}
+          {% include 'netbox_rack_concept/inc/elevation.html' with elevation=rear_elevation %}
+        </div>
+        <div id="concept-elevation-status" class="small text-muted mt-2"></div>
+      </div>
+      {% if perms.netbox_rack_concept.add_conceptdevice %}
+        <div class="card-footer text-end">
+          <a href="{% url 'plugins:netbox_rack_concept:conceptdevice_add' %}?concept={{ object.pk }}&return_url={{ object.get_absolute_url }}"
+             class="btn btn-sm btn-primary">
+            <i class="mdi mdi-plus-thick"></i> {% trans "Add planned device" %}
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h2 class="card-header">{% trans "Deployments" %}</h2>
+      {% render_table deployments_table %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+  {{ block.super }}
+  <script src="{% static 'netbox_rack_concept/elevation.js' %}"></script>
+{% endblock %}

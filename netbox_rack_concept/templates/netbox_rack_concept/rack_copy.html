@@ -1,0 +1,35 @@
+{% extends 'base/layout.html' %}
+{% load i18n %}
+{% load form_helpers %}
+
+{% block title %}{% blocktrans with rack=rack.name %}Copy {{ rack }} to a concept{% endblocktrans %}{% endblock %}
+
+{% block content %}
+<form action="" method="post">
+  {% csrf_token %}
+  <div class="row">
+    <div class="col col-md-8 offset-md-2">
+      <div class="card">
+        <h2 class="card-header">
+          {% blocktrans with rack=rack.name %}Copy rack {{ rack }} to a concept{% endblocktrans %}
+        </h2>
+        <div class="card-body">
+          <p class="text-muted">
+            {% blocktrans count counter=device_count %}
+              The rack contains {{ counter }} racked device, which can be snapshotted into the concept.
+            {% plural %}
+              The rack contains {{ counter }} racked devices, which can be snapshotted into the concept.
+            {% endblocktrans %}
+            {% trans "Nothing in the rack is modified: the concept is a separate object that does not appear in the rack or device lists." %}
+          </p>
+          {% render_form form %}
+        </div>
+        <div class="card-footer text-end">
+          <a href="{{ return_url }}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
+          <button type="submit" class="btn btn-primary">{% trans "Create concept" %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

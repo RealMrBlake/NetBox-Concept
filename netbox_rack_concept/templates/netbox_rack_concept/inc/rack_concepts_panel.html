@@ -1,0 +1,16 @@
+{% load i18n %}
+{% load helpers %}
+<div class="card">
+  <h2 class="card-header">{% trans "Rack Concepts" %}</h2>
+  <table class="table table-hover attr-table">
+    {% for concept in concepts %}
+      <tr>
+        <td>{{ concept|linkify }}</td>
+        <td class="text-end">{% badge concept.get_status_display bg_color=concept.get_status_color %}</td>
+      </tr>
+    {% endfor %}
+  </table>
+  <div class="card-footer small text-muted">
+    {% trans "Concepts copied from this rack. They are planning objects and do not affect this rack." %}
+  </div>
+</div>

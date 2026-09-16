@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "netbox-rack-concept"
+version = "0.1.0"
+description = "Rack blueprints for NetBox: plan racks and their equipment without creating real racks or devices"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Louis" }]
+keywords = ["netbox", "netbox-plugin", "dcim", "planning"]
+classifiers = [
+    "Framework :: Django",
+    "Programming Language :: Python :: 3.12",
+    "Intended Audience :: System Administrators",
+]
+
+[project.urls]
+Homepage = "https://github.com/example/netbox-rack-concept"
+
+[tool.setuptools.packages.find]
+include = ["netbox_rack_concept*"]
+
+[tool.setuptools.package-data]
+netbox_rack_concept = [
+    "templates/netbox_rack_concept/*.html",
+    "templates/netbox_rack_concept/inc/*.html",
+    "static/netbox_rack_concept/*",
+]

@@ -1,0 +1,55 @@
+{% load i18n %}
+{% load l10n %}
+{% comment %}
+  One face of a concept rack. Localization is switched off below because SVG
+  coordinates must use a dot as the decimal separator whatever the UI language is.
+{% endcomment %}
+{% localize off %}
+<div class="concept-elevation" data-face="{{ elevation.face }}">
+  <h5 class="text-center text-muted mb-2">{{ elevation.face_label|title }}</h5>
+  <svg width="{{ elevation.width }}" height="{{ elevation.height }}"
+       viewBox="0 0 {{ elevation.width }} {{ elevation.height }}"
+       class="concept-elevation-svg" role="img"
+       aria-label="{% blocktrans with face=elevation.face_label name=elevation.concept.name %}{{ face }} elevation of {{ name }}{% endblocktrans %}">
+
+    {# Unit rows and legend #}
+    {% for unit in elevation.units %}
+      <g class="unit">
+        <rect x="{{ elevation.legend_width }}" y="{{ unit.y }}"
+              width="{{ elevation.rack_width }}" height="{{ unit.height }}"
+              class="unit-slot"
+              data-unit="{{ unit.number }}"></rect>
+        <text x="{{ elevation.legend_width }}" y="{{ unit.y }}" dx="-4" dy="15"
+              class="unit-label" text-anchor="end">{{ unit.number }}</text>
+      </g>
+    {% endfor %}
+
+    {# Devices #}
+    {% for block in elevation.blocks %}
+      <g class="device-block {% if block.opposite %}opposite{% endif %}"
+         data-device-id="{{ block.device.pk }}"
+         data-position="{{ block.device.position }}"
+         data-u-height="{{ block.device.effective_u_height }}"
+         data-width-fraction="{{ block.device.width_fraction }}">
+        <a href="{{ block.device.get_absolute_url }}">
+          <rect x="{{ block.x }}" y="{{ block.y }}" width="{{ block.width }}" height="{{ block.height }}"
+                rx="2" fill="#{{ block.color }}"
+                fill-opacity="{% if block.opposite %}0.35{% else %}1{% endif %}"
+                class="device-rect"></rect>
+          {% if block.show_text %}
+            <text x="{{ block.x }}" y="{{ block.y }}" dy="15" dx="6"
+                  fill="#{{ block.text_color }}" class="device-label">
+              {{ block.label }}{% if block.opposite %} <tspan class="opposite-hint">({% trans "rear" %})</tspan>{% endif %}
+            </text>
+          {% endif %}
+          <title>{{ block.label }}{% if block.sublabel %} &middot; {{ block.sublabel }}{% endif %} &middot; U{{ block.device.position }}</title>
+        </a>
+      </g>
+    {% endfor %}
+
+    <rect x="{{ elevation.legend_width }}" y="6"
+          width="{{ elevation.rack_width }}" height="{{ elevation.height|add:'-12' }}"
+          class="rack-frame" fill="none"></rect>
+  </svg>
+</div>
+{% endlocalize %}

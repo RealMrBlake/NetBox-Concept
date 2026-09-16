@@ -1,0 +1,102 @@
+{% extends 'generic/object.html' %}
+{% load i18n %}
+{% load helpers %}
+
+{% block content %}
+<div class="row mb-3">
+  <div class="col col-md-6">
+    <div class="card">
+      <h2 class="card-header">{% trans "Planned Device" %}</h2>
+      <table class="table table-hover attr-table">
+        <tr>
+          <th scope="row">{% trans "Concept" %}</th>
+          <td>{{ object.concept|linkify }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Name" %}</th>
+          <td>{{ object.name|placeholder }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Label" %}</th>
+          <td>{{ object.label|placeholder }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Status" %}</th>
+          <td>{% badge object.get_status_display bg_color=object.get_status_color %}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Description" %}</th>
+          <td>{{ object.description|placeholder }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Tenant" %}</th>
+          <td>{{ object.tenant|linkify|placeholder }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Copied from" %}</th>
+          <td>{{ object.source_device|linkify|placeholder }}</td>
+        </tr>
+      </table>
+    </div>
+    {% include 'inc/panels/comments.html' %}
+  </div>
+
+  <div class="col col-md-6">
+    <div class="card">
+      <h2 class="card-header">{% trans "Hardware" %}</h2>
+      <table class="table table-hover attr-table">
+        <tr>
+          <th scope="row">{% trans "Manufacturer" %}</th>
+          <td>{{ object.device_type.manufacturer|linkify|placeholder }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Device type" %}</th>
+          <td>{{ object.device_type|linkify|placeholder }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Role" %}</th>
+          <td>{{ object.role|linkify|placeholder }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Platform" %}</th>
+          <td>{{ object.platform|linkify|placeholder }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Serial" %}</th>
+          <td>{{ object.serial|placeholder }}</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2 class="card-header">{% trans "Placement" %}</h2>
+      <table class="table table-hover attr-table">
+        <tr>
+          <th scope="row">{% trans "Position" %}</th>
+          <td>{% if object.position %}U{{ object.position }}{% else %}{% trans "Not racked" %}{% endif %}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Height" %}</th>
+          <td>{{ object.effective_u_height }}U</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Face" %}</th>
+          <td>{{ object.get_face_display }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Width" %}</th>
+          <td>{{ object.get_width_fraction_display }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Horizontal position" %}</th>
+          <td>{{ object.horizontal_position }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Full depth" %}</th>
+          <td>{% checkmark object.effective_full_depth %}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

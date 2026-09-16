@@ -1,0 +1,395 @@
+import json
+from decimal import Decimal, InvalidOperation
+
+from django.contrib import messages
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.db.models import Count
+from django.http import HttpResponseForbidden, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils.translation import gettext as _
+from django.views.generic import View
+
+from dcim.models import Rack
+from netbox.views import generic
+from utilities.views import ObjectPermissionRequiredMixin, ViewTab, register_model_view
+
+from . import deploy, filtersets, forms, tables
+from .elevation import get_elevations
+from .models import ConceptDevice, RackConcept
+
+__all__ = (
+    'ConceptDeviceView',
+    'RackConceptView',
+)
+
+
+#
+# Rack concepts
+#
+
+@register_model_view(RackConcept, 'list', path='', detail=False)
+class RackConceptListView(generic.ObjectListView):
+    queryset = RackConcept.objects.annotate(
+        device_count=Count('devices')
+    ).select_related('tenant', 'tenant_group', 'rack_type')
+    table = tables.RackConceptTable
+    filterset = filtersets.RackConceptFilterSet
+    filterset_form = forms.RackConceptFilterForm
+
+
+@register_model_view(RackConcept)
+class RackConceptView(generic.ObjectView):
+    queryset = RackConcept.objects.select_related('tenant', 'tenant_group', 'rack_type', 'source_rack')
+    template_name = 'netbox_rack_concept/rackconcept.html'
+
+    def get_extra_context(self, request, instance):
+        front, rear = get_elevations(instance)
+        deployments = tables.ConceptDeploymentTable(
+            instance.deployments.select_related('rack', 'user')
+        )
+        return {
+            'front_elevation': front,
+            'rear_elevation': rear,
+            'deployments_table': deployments,
+        }
+
+
+@register_model_view(RackConcept, 'devices')
+class RackConceptDevicesView(generic.ObjectChildrenView):
+    queryset = RackConcept.objects.all()
+    child_model = ConceptDevice
+    table = tables.ConceptDeviceElevationTable
+    filterset = filtersets.ConceptDeviceFilterSet
+    template_name = 'netbox_rack_concept/rackconcept_devices.html'
+    tab = ViewTab(
+        label=_('Devices'),
+        badge=lambda obj: obj.devices.count(),
+        permission='netbox_rack_concept.view_conceptdevice',
+        weight=500
+    )
+
+    def get_children(self, request, parent):
+        return parent.devices.select_related('device_type', 'device_type__manufacturer', 'role', 'platform', 'tenant')
+
+
+@register_model_view(RackConcept, 'add', detail=False)
+@register_model_view(RackConcept, 'edit')
+class RackConceptEditView(generic.ObjectEditView):
+    queryset = RackConcept.objects.all()
+    form = forms.RackConceptForm
+
+    def alter_object(self, obj, request, url_args, url_kwargs):
+        if not obj.pk:
+            config = settings.PLUGINS_CONFIG.get('netbox_rack_concept', {})
+            obj.u_height = config.get('default_u_height', 42)
+            obj.width = config.get('default_width', 19)
+        return obj
+
+
+@register_model_view(RackConcept, 'delete')
+class RackConceptDeleteView(generic.ObjectDeleteView):
+    queryset = RackConcept.objects.all()
+
+
+@register_model_view(RackConcept, 'bulk_import', path='import', detail=False)
+class RackConceptBulkImportView(generic.BulkImportView):
+    queryset = RackConcept.objects.all()
+    model_form = forms.RackConceptImportForm
+
+
+@register_model_view(RackConcept, 'bulk_edit', path='edit', detail=False)
+class RackConceptBulkEditView(generic.BulkEditView):
+    queryset = RackConcept.objects.annotate(device_count=Count('devices'))
+    filterset = filtersets.RackConceptFilterSet
+    table = tables.RackConceptTable
+    form = forms.RackConceptBulkEditForm
+
+
+@register_model_view(RackConcept, 'bulk_delete', path='delete', detail=False)
+class RackConceptBulkDeleteView(generic.BulkDeleteView):
+    queryset = RackConcept.objects.annotate(device_count=Count('devices'))
+    filterset = filtersets.RackConceptFilterSet
+    table = tables.RackConceptTable
+
+
+#
+# Concept devices
+#
+
+@register_model_view(ConceptDevice, 'list', path='', detail=False)
+class ConceptDeviceListView(generic.ObjectListView):
+    queryset = ConceptDevice.objects.select_related(
+        'concept', 'device_type', 'device_type__manufacturer', 'role', 'platform', 'tenant'
+    )
+    table = tables.ConceptDeviceTable
+    filterset = filtersets.ConceptDeviceFilterSet
+    filterset_form = forms.ConceptDeviceFilterForm
+
+
+@register_model_view(ConceptDevice)
+class ConceptDeviceView(generic.ObjectView):
+    queryset = ConceptDevice.objects.select_related(
+        'concept', 'device_type', 'device_type__manufacturer', 'role', 'platform', 'tenant', 'source_device'
+    )
+    template_name = 'netbox_rack_concept/conceptdevice.html'
+
+
+@register_model_view(ConceptDevice, 'add', detail=False)
+@register_model_view(ConceptDevice, 'edit')
+class ConceptDeviceEditView(generic.ObjectEditView):
+    queryset = ConceptDevice.objects.all()
+    form = forms.ConceptDeviceForm
+
+
+@register_model_view(ConceptDevice, 'delete')
+class ConceptDeviceDeleteView(generic.ObjectDeleteView):
+    queryset = ConceptDevice.objects.all()
+
+
+@register_model_view(ConceptDevice, 'bulk_import', path='import', detail=False)
+class ConceptDeviceBulkImportView(generic.BulkImportView):
+    queryset = ConceptDevice.objects.all()
+    model_form = forms.ConceptDeviceImportForm
+
+
+@register_model_view(ConceptDevice, 'bulk_edit', path='edit', detail=False)
+class ConceptDeviceBulkEditView(generic.BulkEditView):
+    queryset = ConceptDevice.objects.select_related('concept', 'device_type', 'role')
+    filterset = filtersets.ConceptDeviceFilterSet
+    table = tables.ConceptDeviceTable
+    form = forms.ConceptDeviceBulkEditForm
+
+
+@register_model_view(ConceptDevice, 'bulk_delete', path='delete', detail=False)
+class ConceptDeviceBulkDeleteView(generic.BulkDeleteView):
+    queryset = ConceptDevice.objects.select_related('concept', 'device_type', 'role')
+    filterset = filtersets.ConceptDeviceFilterSet
+    table = tables.ConceptDeviceTable
+
+
+#
+# Actions: copy, clone, deploy, reorder
+#
+
+class RackCopyView(ObjectPermissionRequiredMixin, View):
+    """Copy a real rack into a new concept. Reached from the rack detail page."""
+    queryset = RackConcept.objects.all()
+
+    def get_required_permission(self):
+        return 'netbox_rack_concept.add_rackconcept'
+
+    def get(self, request, pk):
+        rack = get_object_or_404(Rack.objects.restrict(request.user, 'view'), pk=pk)
+        form = forms.RackCopyForm(initial={
+            'name': _('%(rack)s (concept)') % {'rack': rack.name},
+            'tenant': rack.tenant_id,
+            'tenant_group': rack.tenant.group_id if rack.tenant else None,
+        })
+        return render(request, 'netbox_rack_concept/rack_copy.html', {
+            'rack': rack,
+            'form': form,
+            'device_count': rack.devices.filter(position__isnull=False).count(),
+            'return_url': rack.get_absolute_url(),
+        })
+
+    def post(self, request, pk):
+        rack = get_object_or_404(Rack.objects.restrict(request.user, 'view'), pk=pk)
+        form = forms.RackCopyForm(request.POST)
+
+        if form.is_valid():
+            try:
+                concept = deploy.copy_rack_to_concept(
+                    rack=rack,
+                    name=form.cleaned_data['name'],
+                    status=form.cleaned_data['status'],
+                    tenant=form.cleaned_data['tenant'],
+                    tenant_group=form.cleaned_data['tenant_group'],
+                    description=form.cleaned_data['description'],
+                    include_devices=form.cleaned_data['include_devices'],
+                    include_device_names=form.cleaned_data['include_device_names'],
+                )
+            except ValidationError as exc:
+                form.add_error(None, exc)
+            else:
+                messages.success(request, _('Created concept %(concept)s from rack %(rack)s.') % {
+                    'concept': concept, 'rack': rack
+                })
+                return redirect(concept.get_absolute_url())
+
+        return render(request, 'netbox_rack_concept/rack_copy.html', {
+            'rack': rack,
+            'form': form,
+            'device_count': rack.devices.filter(position__isnull=False).count(),
+            'return_url': rack.get_absolute_url(),
+        })
+
+
+@register_model_view(RackConcept, 'clone_concept', path='clone')
+class RackConceptCloneView(ObjectPermissionRequiredMixin, View):
+    """Duplicate a concept to build a variant."""
+    queryset = RackConcept.objects.all()
+
+    def get_required_permission(self):
+        return 'netbox_rack_concept.add_rackconcept'
+
+    def get(self, request, pk):
+        concept = get_object_or_404(self.queryset.restrict(request.user, 'view'), pk=pk)
+        form = forms.RackConceptCloneForm(initial={
+            'name': _('%(name)s (copy)') % {'name': concept.name},
+            'tenant': concept.tenant_id,
+        })
+        return render(request, 'netbox_rack_concept/concept_clone.html', {
+            'object': concept,
+            'form': form,
+            'return_url': concept.get_absolute_url(),
+        })
+
+    def post(self, request, pk):
+        concept = get_object_or_404(self.queryset.restrict(request.user, 'view'), pk=pk)
+        form = forms.RackConceptCloneForm(request.POST)
+
+        if form.is_valid():
+            try:
+                clone = deploy.clone_concept(
+                    concept=concept,
+                    name=form.cleaned_data['name'],
+                    status=form.cleaned_data['status'],
+                    tenant=form.cleaned_data['tenant'],
+                    include_devices=form.cleaned_data['include_devices'],
+                )
+            except ValidationError as exc:
+                form.add_error(None, exc)
+            else:
+                messages.success(request, _('Cloned %(source)s into %(clone)s.') % {
+                    'source': concept, 'clone': clone
+                })
+                return redirect(clone.get_absolute_url())
+
+        return render(request, 'netbox_rack_concept/concept_clone.html', {
+            'object': concept,
+            'form': form,
+            'return_url': concept.get_absolute_url(),
+        })
+
+
+@register_model_view(RackConcept, 'deploy')
+class RackConceptDeployView(ObjectPermissionRequiredMixin, View):
+    """Materialise a concept as one or more real racks."""
+    queryset = RackConcept.objects.all()
+
+    def get_required_permission(self):
+        # The mixin restricts against this view's queryset, so it has to be a concept
+        # permission. The permission to create racks is checked separately below.
+        return 'netbox_rack_concept.view_rackconcept'
+
+    def _context(self, request, concept, form):
+        # An unchecked checkbox is simply absent from the POST data.
+        create_devices = 'create_devices' in form.data if form.is_bound else True
+        deployable, warnings = deploy.validate_deployment(concept, create_devices=create_devices)
+        return {
+            'object': concept,
+            'form': form,
+            'deployable_count': len(deployable),
+            'warnings': warnings,
+            'return_url': concept.get_absolute_url(),
+        }
+
+    def get(self, request, pk):
+        concept = get_object_or_404(self.queryset.restrict(request.user, 'view'), pk=pk)
+        form = forms.ConceptDeployForm(concept=concept)
+        return render(request, 'netbox_rack_concept/concept_deploy.html', self._context(request, concept, form))
+
+    def post(self, request, pk):
+        concept = get_object_or_404(self.queryset.restrict(request.user, 'view'), pk=pk)
+        form = forms.ConceptDeployForm(request.POST, concept=concept)
+
+        if not request.user.has_perm('dcim.add_rack'):
+            return HttpResponseForbidden(_('You do not have permission to create racks.'))
+
+        if form.is_valid():
+            try:
+                racks, devices, warnings = deploy.deploy_concept(
+                    concept=concept,
+                    rack_names=form.cleaned_data['rack_names'],
+                    site=form.cleaned_data['site'],
+                    location=form.cleaned_data['location'],
+                    tenant=form.cleaned_data['tenant'],
+                    create_devices=form.cleaned_data['create_devices'],
+                    device_name_pattern=form.cleaned_data['device_name_pattern'],
+                    skip_unnamed_devices=form.cleaned_data['skip_unnamed_devices'],
+                    user=request.user,
+                )
+            except ValidationError as exc:
+                # Nothing was written: deploy_concept runs in a transaction.
+                messages.error(request, _('Deployment failed, nothing was created.'))
+                form.add_error(None, exc)
+            else:
+                for warning in warnings:
+                    messages.warning(request, warning)
+                messages.success(request, _('Created %(racks)s rack(s) and %(devices)s device(s).') % {
+                    'racks': len(racks), 'devices': len(devices)
+                })
+                if len(racks) == 1:
+                    return redirect(racks[0].get_absolute_url())
+                return redirect(
+                    reverse('dcim:rack_list') + f'?site_id={form.cleaned_data["site"].pk}'
+                )
+
+        return render(request, 'netbox_rack_concept/concept_deploy.html', self._context(request, concept, form))
+
+
+@register_model_view(RackConcept, 'reorder')
+class RackConceptReorderView(ObjectPermissionRequiredMixin, View):
+    """
+    Endpoint for the drag & drop elevation. Accepts a JSON body of the shape
+    {"devices": [{"id": 1, "position": "12.0", "face": "front", "horizontal_position": 0}]}
+    and applies all moves in one transaction so a rejected move leaves nothing half-applied.
+    """
+    queryset = RackConcept.objects.all()
+    http_method_names = ['post']
+
+    def get_required_permission(self):
+        return 'netbox_rack_concept.change_conceptdevice'
+
+    def post(self, request, pk):
+        concept = get_object_or_404(self.queryset.restrict(request.user, 'view'), pk=pk)
+
+        try:
+            payload = json.loads(request.body or '{}')
+            moves = payload['devices']
+        except (json.JSONDecodeError, KeyError, TypeError):
+            return JsonResponse({'error': _('Malformed request body.')}, status=400)
+
+        by_pk = {d.pk: d for d in concept.devices.select_related('device_type')}
+        updated = []
+
+        try:
+            with transaction.atomic():
+                for move in moves:
+                    device = by_pk.get(int(move['id']))
+                    if device is None:
+                        raise ValidationError(_('Device %(id)s does not belong to this concept.') % {'id': move['id']})
+                    try:
+                        device.position = Decimal(str(move['position'])) if move.get('position') is not None else None
+                    except InvalidOperation:
+                        raise ValidationError(_('Invalid position %(position)r.') % {'position': move.get('position')})
+                    if 'face' in move:
+                        device.face = move['face']
+                    if 'horizontal_position' in move:
+                        device.horizontal_position = int(move['horizontal_position'])
+                    if 'width_fraction' in move:
+                        device.width_fraction = int(move['width_fraction'])
+                    updated.append(device)
+
+                # Validate only after every move is staged, so swapping two devices works.
+                for device in updated:
+                    device.save()
+                for device in updated:
+                    device.full_clean()
+        except ValidationError as exc:
+            return JsonResponse({'error': ' '.join(exc.messages)}, status=400)
+
+        return JsonResponse({'status': 'ok', 'updated': len(updated)})

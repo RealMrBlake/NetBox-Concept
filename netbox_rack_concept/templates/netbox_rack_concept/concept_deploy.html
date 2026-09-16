@@ -1,0 +1,48 @@
+{% extends 'base/layout.html' %}
+{% load i18n %}
+{% load form_helpers %}
+
+{% block title %}{% blocktrans with name=object.name %}Deploy {{ name }}{% endblocktrans %}{% endblock %}
+
+{% block content %}
+<form action="" method="post">
+  {% csrf_token %}
+  <div class="row">
+    <div class="col col-md-8 offset-md-2">
+
+      <div class="card">
+        <h2 class="card-header">{% blocktrans with name=object.name %}Deploy concept {{ name }}{% endblocktrans %}</h2>
+        <div class="card-body">
+          <p class="text-muted">
+            {% trans "This creates real racks and devices in NetBox. The concept itself is left untouched and stays reusable." %}
+            {% blocktrans count counter=deployable_count %}
+              {{ counter }} planned device will be created per rack.
+            {% plural %}
+              {{ counter }} planned devices will be created per rack.
+            {% endblocktrans %}
+          </p>
+          {% render_form form %}
+        </div>
+        <div class="card-footer text-end">
+          <a href="{{ return_url }}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
+          <button type="submit" class="btn btn-primary">{% trans "Deploy" %}</button>
+        </div>
+      </div>
+
+      {% if warnings %}
+        <div class="card">
+          <h2 class="card-header text-warning">
+            <i class="mdi mdi-alert"></i> {% trans "Will be skipped" %}
+          </h2>
+          <ul class="list-group list-group-flush">
+            {% for warning in warnings %}
+              <li class="list-group-item">{{ warning }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+    </div>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'base/layout.html' %}
+{% load i18n %}
+{% load form_helpers %}
+
+{% block title %}{% blocktrans with name=object.name %}Clone {{ name }}{% endblocktrans %}{% endblock %}
+
+{% block content %}
+<form action="" method="post">
+  {% csrf_token %}
+  <div class="row">
+    <div class="col col-md-8 offset-md-2">
+      <div class="card">
+        <h2 class="card-header">{% blocktrans with name=object.name %}Clone concept {{ name }}{% endblocktrans %}</h2>
+        <div class="card-body">
+          <p class="text-muted">
+            {% blocktrans count counter=object.devices.count %}
+              The original keeps its {{ counter }} planned device. The clone is independent from this point on.
+            {% plural %}
+              The original keeps its {{ counter }} planned devices. The clone is independent from this point on.
+            {% endblocktrans %}
+          </p>
+          {% render_form form %}
+        </div>
+        <div class="card-footer text-end">
+          <a href="{{ return_url }}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
+          <button type="submit" class="btn btn-primary">{% trans "Create clone" %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

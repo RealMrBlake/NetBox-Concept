@@ -1,0 +1,61 @@
+/* Concept rack elevations. Colours follow the NetBox theme via CSS variables so the
+   elevation stays readable in both light and dark mode. */
+
+.concept-elevation {
+    margin: 0 0.5rem 1rem;
+}
+
+.concept-elevation-svg {
+    max-width: 100%;
+    height: auto;
+    user-select: none;
+    touch-action: none;
+}
+
+.concept-elevation .unit-slot {
+    fill: var(--tblr-bg-surface-secondary, #f6f8fa);
+    stroke: var(--tblr-border-color, #dadfe5);
+    stroke-width: 1;
+}
+
+.concept-elevation .unit-slot.drop-target {
+    fill: var(--tblr-primary-lt, #d7e7fb);
+}
+
+.concept-elevation .unit-label {
+    font-size: 10px;
+    fill: var(--tblr-secondary, #808f9c);
+}
+
+.concept-elevation .rack-frame {
+    stroke: var(--tblr-body-color, #35404a);
+    stroke-width: 2;
+}
+
+.concept-elevation .device-rect {
+    stroke: rgba(0, 0, 0, 0.35);
+    stroke-width: 1;
+}
+
+.concept-elevation .device-label {
+    font-size: 11px;
+    pointer-events: none;
+}
+
+.concept-elevation .opposite-hint {
+    font-size: 9px;
+    opacity: 0.8;
+}
+
+.concept-elevation .device-block.opposite .device-rect {
+    stroke-dasharray: 3 2;
+}
+
+.concept-elevation[data-editable="true"] .device-block:not(.opposite) {
+    cursor: grab;
+}
+
+.concept-elevation .device-block.dragging {
+    opacity: 0.6;
+    cursor: grabbing;
+}
