@@ -5,10 +5,10 @@ __version__ = '0.1.0'
 
 class RackConceptConfig(PluginConfig):
     name = 'netbox_rack_concept'
-    verbose_name = 'Rack Concepts'
+    verbose_name = 'NetBox Rack Concepts'
     description = 'Rack blueprints: plan racks and their equipment without creating real racks or devices'
     version = __version__
-    author = 'Louis'
+    author = 'Claude'
     base_url = 'rack-concepts'
     min_version = '4.6.0'
     max_version = '4.6.99'

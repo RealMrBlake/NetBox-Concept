@@ -17,6 +17,7 @@ from netbox.views import generic
 from utilities.views import ObjectPermissionRequiredMixin, ViewTab, register_model_view
 
 from . import components, deploy, filtersets, forms, tables
+from .choices import ConceptComponentTypeChoices
 from .elevation import get_elevations
 from .models import ConceptCable, ConceptComponent, ConceptDevice, RackConcept
 
@@ -140,17 +141,6 @@ class ConceptDeviceView(generic.ObjectView):
     )
     template_name = 'netbox_rack_concept/conceptdevice.html'
 
-    def get_extra_context(self, request, instance):
-        component_table = tables.ConceptComponentTable(
-            instance.components.select_related('device').order_by('component_type', 'name'),
-            exclude=('device', 'concept'),
-            orderable=False,
-        )
-        component_table.configure(request)
-        return {
-            'component_table': component_table,
-        }
-
 
 @register_model_view(ConceptDevice, 'sync_components')
 class ConceptDeviceSyncComponentsView(ObjectPermissionRequiredMixin, View):
@@ -183,6 +173,129 @@ class ConceptDeviceSyncComponentsView(ObjectPermissionRequiredMixin, View):
             messages.success(request, _('Mapped %(count)s front/rear port pair(s).') % {'count': mapped})
 
         return redirect(device.get_absolute_url())
+
+
+class ConceptDeviceComponentsView(generic.ObjectChildrenView):
+    """
+    Base for the per-type component tabs (Interfaces / Front Ports / ...), mirroring
+    dcim's own device component tabs one-for-one: same names, paths and tab order.
+    Since one ConceptComponent model covers every type (see models.py), a subclass only
+    needs to say which component_type it shows - there's no separate model per tab to
+    plug in the way dcim.Interface/dcim.FrontPort/etc. do.
+    """
+    queryset = ConceptDevice.objects.all()
+    child_model = ConceptComponent
+    table = tables.ConceptComponentTable
+    filterset = filtersets.ConceptComponentFilterSet
+    filterset_form = forms.ConceptComponentFilterForm
+    template_name = 'netbox_rack_concept/conceptdevice_components.html'
+    component_type = None
+
+    def get_children(self, request, parent):
+        return ConceptComponent.objects.restrict(request.user, 'view').filter(
+            device=parent, component_type=self.component_type
+        )
+
+    def get_table(self, data, request, bulk_actions=True):
+        # device/concept/component_type are all implied by "which tab this is" - showing
+        # them again on every row would just be noise.
+        table = self.table(data, exclude=('device', 'concept', 'component_type'))
+        if 'pk' in table.base_columns and bulk_actions:
+            table.columns.show('pk')
+        table.configure(request)
+        return table
+
+    def get_extra_context(self, request, instance):
+        return {
+            'component_type': self.component_type,
+            'component_type_label': self.tab.label,
+        }
+
+
+@register_model_view(ConceptDevice, 'consoleports', path='console-ports')
+class ConceptDeviceConsolePortsView(ConceptDeviceComponentsView):
+    component_type = ConceptComponentTypeChoices.TYPE_CONSOLE_PORT
+    tab = ViewTab(
+        label=_('Console Ports'),
+        badge=lambda obj: obj.components.filter(component_type=ConceptComponentTypeChoices.TYPE_CONSOLE_PORT).count(),
+        permission='netbox_rack_concept.view_conceptcomponent',
+        weight=550,
+        hide_if_empty=True
+    )
+
+
+@register_model_view(ConceptDevice, 'consoleserverports', path='console-server-ports')
+class ConceptDeviceConsoleServerPortsView(ConceptDeviceComponentsView):
+    component_type = ConceptComponentTypeChoices.TYPE_CONSOLE_SERVER_PORT
+    tab = ViewTab(
+        label=_('Console Server Ports'),
+        badge=lambda obj: obj.components.filter(
+            component_type=ConceptComponentTypeChoices.TYPE_CONSOLE_SERVER_PORT
+        ).count(),
+        permission='netbox_rack_concept.view_conceptcomponent',
+        weight=560,
+        hide_if_empty=True
+    )
+
+
+@register_model_view(ConceptDevice, 'powerports', path='power-ports')
+class ConceptDevicePowerPortsView(ConceptDeviceComponentsView):
+    component_type = ConceptComponentTypeChoices.TYPE_POWER_PORT
+    tab = ViewTab(
+        label=_('Power Ports'),
+        badge=lambda obj: obj.components.filter(component_type=ConceptComponentTypeChoices.TYPE_POWER_PORT).count(),
+        permission='netbox_rack_concept.view_conceptcomponent',
+        weight=570,
+        hide_if_empty=True
+    )
+
+
+@register_model_view(ConceptDevice, 'poweroutlets', path='power-outlets')
+class ConceptDevicePowerOutletsView(ConceptDeviceComponentsView):
+    component_type = ConceptComponentTypeChoices.TYPE_POWER_OUTLET
+    tab = ViewTab(
+        label=_('Power Outlets'),
+        badge=lambda obj: obj.components.filter(component_type=ConceptComponentTypeChoices.TYPE_POWER_OUTLET).count(),
+        permission='netbox_rack_concept.view_conceptcomponent',
+        weight=580,
+        hide_if_empty=True
+    )
+
+
+@register_model_view(ConceptDevice, 'interfaces')
+class ConceptDeviceInterfacesView(ConceptDeviceComponentsView):
+    component_type = ConceptComponentTypeChoices.TYPE_INTERFACE
+    tab = ViewTab(
+        label=_('Interfaces'),
+        badge=lambda obj: obj.components.filter(component_type=ConceptComponentTypeChoices.TYPE_INTERFACE).count(),
+        permission='netbox_rack_concept.view_conceptcomponent',
+        weight=520,
+        hide_if_empty=True
+    )
+
+
+@register_model_view(ConceptDevice, 'frontports', path='front-ports')
+class ConceptDeviceFrontPortsView(ConceptDeviceComponentsView):
+    component_type = ConceptComponentTypeChoices.TYPE_FRONT_PORT
+    tab = ViewTab(
+        label=_('Front Ports'),
+        badge=lambda obj: obj.components.filter(component_type=ConceptComponentTypeChoices.TYPE_FRONT_PORT).count(),
+        permission='netbox_rack_concept.view_conceptcomponent',
+        weight=530,
+        hide_if_empty=True
+    )
+
+
+@register_model_view(ConceptDevice, 'rearports', path='rear-ports')
+class ConceptDeviceRearPortsView(ConceptDeviceComponentsView):
+    component_type = ConceptComponentTypeChoices.TYPE_REAR_PORT
+    tab = ViewTab(
+        label=_('Rear Ports'),
+        badge=lambda obj: obj.components.filter(component_type=ConceptComponentTypeChoices.TYPE_REAR_PORT).count(),
+        permission='netbox_rack_concept.view_conceptcomponent',
+        weight=540,
+        hide_if_empty=True
+    )
 
 
 @register_model_view(ConceptDevice, 'add', detail=False)
@@ -249,7 +362,7 @@ class RackCopyView(ObjectPermissionRequiredMixin, View):
 
         if form.is_valid():
             try:
-                concept, warnings = deploy.copy_rack_to_concept(
+                concept, warnings, cable_summary = deploy.copy_rack_to_concept(
                     rack=rack,
                     name=form.cleaned_data['name'],
                     status=form.cleaned_data['status'],
@@ -267,9 +380,17 @@ class RackCopyView(ObjectPermissionRequiredMixin, View):
             else:
                 for warning in warnings:
                     messages.warning(request, warning)
-                messages.success(request, _('Created concept %(concept)s from rack %(rack)s.') % {
+                if cable_summary['skipped']:
+                    messages.warning(request, _(
+                        '%(count)s cable(s) could not be copied because they reach outside the rack or use more '
+                        'than one termination per side.'
+                    ) % {'count': cable_summary['skipped']})
+                success_message = _('Created concept %(concept)s from rack %(rack)s.') % {
                     'concept': concept, 'rack': rack
-                })
+                }
+                if cable_summary['copied']:
+                    success_message += ' ' + _('Copied %(count)s cable(s).') % {'count': cable_summary['copied']}
+                messages.success(request, success_message)
                 return redirect(concept.get_absolute_url())
 
         return render(request, 'netbox_rack_concept/rack_copy.html', {
@@ -354,7 +475,7 @@ class MergeRacksToConceptView(ObjectPermissionRequiredMixin, View):
 
         if form.is_valid():
             try:
-                concept, warnings = deploy.merge_racks_to_concept(
+                concept, warnings, cable_summary = deploy.merge_racks_to_concept(
                     rack_bottom=form.cleaned_data['rack_bottom'],
                     rack_top=form.cleaned_data['rack_top'],
                     name=form.cleaned_data['name'],
@@ -373,11 +494,19 @@ class MergeRacksToConceptView(ObjectPermissionRequiredMixin, View):
             else:
                 for warning in warnings:
                     messages.warning(request, warning)
-                messages.success(request, _('Created concept %(concept)s from %(bottom)s and %(top)s.') % {
+                if cable_summary['skipped']:
+                    messages.warning(request, _(
+                        '%(count)s cable(s) could not be copied because they reach outside the two racks or use '
+                        'more than one termination per side.'
+                    ) % {'count': cable_summary['skipped']})
+                success_message = _('Created concept %(concept)s from %(bottom)s and %(top)s.') % {
                     'concept': concept,
                     'bottom': form.cleaned_data['rack_bottom'],
                     'top': form.cleaned_data['rack_top'],
-                })
+                }
+                if cable_summary['copied']:
+                    success_message += ' ' + _('Copied %(count)s cable(s).') % {'count': cable_summary['copied']}
+                messages.success(request, success_message)
                 return redirect(concept.get_absolute_url())
 
         return render(request, 'netbox_rack_concept/racks_merge.html', {

@@ -1,0 +1,12 @@
+{% extends 'generic/object_children.html' %}
+{% load i18n %}
+
+{% block bulk_extra_controls %}
+  {{ block.super }}
+  {% if perms.netbox_rack_concept.add_conceptcomponent %}
+    <a href="{% url 'plugins:netbox_rack_concept:conceptcomponent_add' %}?device={{ object.pk }}&amp;component_type={{ component_type }}&amp;return_url={{ request.path }}"
+       class="btn btn-primary">
+      <i class="mdi mdi-plus-thick"></i> {% blocktrans %}Add {{ component_type_label }}{% endblocktrans %}
+    </a>
+  {% endif %}
+{% endblock %}

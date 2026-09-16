@@ -10,6 +10,7 @@ from django.utils.translation import gettext as _
 from dcim.choices import RackWidthChoices
 from dcim.models import Device, Rack
 
+from . import components
 from .choices import ConceptDeviceStatusChoices, ConceptStatusChoices
 from .integrations import apply_partial_width, read_partial_width
 from .models import ConceptDeployment, ConceptDevice, RackConcept
@@ -54,7 +55,12 @@ def copy_rack_to_concept(rack, name, status=ConceptStatusChoices.STATUS_DRAFT, t
     override lets the concept end up a different size than the source rack (e.g. to
     plan "what if we had a taller one"); devices that no longer fit are skipped and
     reported back as warnings rather than aborting the whole copy.
-    Returns (concept, warnings).
+
+    Copied devices also get their components synced from their device type, and any
+    cable between two of them is recreated as a ConceptCable - so the copy is cabled
+    exactly like the source rack wherever both ends of a cable stayed inside it.
+    Returns (concept, warnings, cable_summary), where cable_summary is
+    {'copied': int, 'skipped': int}.
     """
     concept = RackConcept(
         name=name,
@@ -90,10 +96,12 @@ def copy_rack_to_concept(rack, name, status=ConceptStatusChoices.STATUS_DRAFT, t
     concept.save()
 
     warnings = []
+    cable_summary = {'copied': 0, 'skipped': 0}
     if include_devices:
         devices = Device.objects.filter(rack=rack, position__isnull=False).select_related(
             'device_type', 'role', 'platform', 'tenant'
         )
+        new_devices = []
         for device in devices:
             fraction, horizontal = read_partial_width(device)
             concept_device = ConceptDevice(
@@ -120,8 +128,15 @@ def copy_rack_to_concept(rack, name, status=ConceptStatusChoices.STATUS_DRAFT, t
                     ) % {'device': device, 'position': device.position})
                     continue
             concept_device.save()
+            new_devices.append(concept_device)
 
-    return concept, warnings
+        # Recreate each device's components from its device type, then wire up
+        # whichever cables stayed entirely inside the rack being copied.
+        for concept_device in new_devices:
+            components.sync_components(concept_device)
+        cable_summary['copied'], cable_summary['skipped'] = components.copy_cables(new_devices)
+
+    return concept, warnings, cable_summary
 
 
 #
@@ -209,7 +224,12 @@ def merge_racks_to_concept(rack_bottom, rack_top, name, status=ConceptStatusChoi
     Combine two real racks directly into one new, taller blueprint - e.g. two
     half-height racks planned as one full-height rack. rack_bottom's devices keep their
     position; rack_top's are shifted up by rack_bottom's height. Neither source rack is
-    modified. Returns (concept, warnings).
+    modified.
+
+    Copied devices also get their components synced from their device type, and any
+    cable between two of them (from either rack) is recreated as a ConceptCable.
+    Returns (concept, warnings, cable_summary), where cable_summary is
+    {'copied': int, 'skipped': int}.
     """
     bottom_height = _rack_geometry(rack_bottom, 'u_height') or rack_bottom.u_height
     top_height = _rack_geometry(rack_top, 'u_height') or rack_top.u_height
@@ -235,6 +255,7 @@ def merge_racks_to_concept(rack_bottom, rack_top, name, status=ConceptStatusChoi
     concept.save()
 
     warnings = []
+    new_devices = []
 
     def _copy_from_rack(rack, shift):
         if not include_devices:
@@ -267,11 +288,17 @@ def merge_racks_to_concept(rack_bottom, rack_top, name, status=ConceptStatusChoi
                 ) % {'device': device, 'rack': rack})
                 continue
             concept_device.save()
+            new_devices.append(concept_device)
 
     _copy_from_rack(rack_bottom, 0)
     _copy_from_rack(rack_top, bottom_height)
 
-    return concept, warnings
+    for concept_device in new_devices:
+        components.sync_components(concept_device)
+    cable_summary = {'copied': 0, 'skipped': 0}
+    cable_summary['copied'], cable_summary['skipped'] = components.copy_cables(new_devices)
+
+    return concept, warnings, cable_summary
 
 
 #

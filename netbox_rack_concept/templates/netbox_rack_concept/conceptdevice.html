@@ -1,7 +1,6 @@
 {% extends 'generic/object.html' %}
 {% load i18n %}
 {% load helpers %}
-{% load render_table from django_tables2 %}
 
 {% block extra_controls %}
   {{ block.super }}
@@ -9,6 +8,22 @@
     <a href="{% url 'plugins:netbox_rack_concept:conceptdevice_sync_components' pk=object.pk %}" class="btn btn-outline-secondary">
       <i class="mdi mdi-sync"></i> {% trans "Sync components" %}
     </a>
+  {% endif %}
+  {% if perms.netbox_rack_concept.add_conceptcomponent %}
+    <div class="dropdown">
+      <button id="add-components" type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="mdi mdi-plus-thick" aria-hidden="true"></i> {% trans "Add Components" %}
+      </button>
+      <ul class="dropdown-menu" aria-labelledby="add-components">
+        <li><a class="dropdown-item" href="{% url 'plugins:netbox_rack_concept:conceptcomponent_add' %}?device={{ object.pk }}&amp;component_type=console-port&amp;return_url={% url 'plugins:netbox_rack_concept:conceptdevice_consoleports' pk=object.pk %}">{% trans "Console Ports" %}</a></li>
+        <li><a class="dropdown-item" href="{% url 'plugins:netbox_rack_concept:conceptcomponent_add' %}?device={{ object.pk }}&amp;component_type=console-server-port&amp;return_url={% url 'plugins:netbox_rack_concept:conceptdevice_consoleserverports' pk=object.pk %}">{% trans "Console Server Ports" %}</a></li>
+        <li><a class="dropdown-item" href="{% url 'plugins:netbox_rack_concept:conceptcomponent_add' %}?device={{ object.pk }}&amp;component_type=power-port&amp;return_url={% url 'plugins:netbox_rack_concept:conceptdevice_powerports' pk=object.pk %}">{% trans "Power Ports" %}</a></li>
+        <li><a class="dropdown-item" href="{% url 'plugins:netbox_rack_concept:conceptcomponent_add' %}?device={{ object.pk }}&amp;component_type=power-outlet&amp;return_url={% url 'plugins:netbox_rack_concept:conceptdevice_poweroutlets' pk=object.pk %}">{% trans "Power Outlets" %}</a></li>
+        <li><a class="dropdown-item" href="{% url 'plugins:netbox_rack_concept:conceptcomponent_add' %}?device={{ object.pk }}&amp;component_type=interface&amp;return_url={% url 'plugins:netbox_rack_concept:conceptdevice_interfaces' pk=object.pk %}">{% trans "Interfaces" %}</a></li>
+        <li><a class="dropdown-item" href="{% url 'plugins:netbox_rack_concept:conceptcomponent_add' %}?device={{ object.pk }}&amp;component_type=front-port&amp;return_url={% url 'plugins:netbox_rack_concept:conceptdevice_frontports' pk=object.pk %}">{% trans "Front Ports" %}</a></li>
+        <li><a class="dropdown-item" href="{% url 'plugins:netbox_rack_concept:conceptcomponent_add' %}?device={{ object.pk }}&amp;component_type=rear-port&amp;return_url={% url 'plugins:netbox_rack_concept:conceptdevice_rearports' pk=object.pk %}">{% trans "Rear Ports" %}</a></li>
+      </ul>
+    </div>
   {% endif %}
 {% endblock %}
 
@@ -106,23 +121,6 @@
           <td>{% checkmark object.effective_full_depth %}</td>
         </tr>
       </table>
-    </div>
-  </div>
-</div>
-
-<div class="row mb-3">
-  <div class="col col-md-12">
-    <div class="card">
-      <h2 class="card-header">
-        {% trans "Components" %}
-        {% if perms.netbox_rack_concept.add_conceptcomponent %}
-          <a href="{% url 'plugins:netbox_rack_concept:conceptcomponent_add' %}?device={{ object.pk }}"
-             class="btn btn-sm btn-primary float-end">
-            <i class="mdi mdi-plus-thick"></i> {% trans "Add component" %}
-          </a>
-        {% endif %}
-      </h2>
-      {% render_table component_table %}
     </div>
   </div>
 </div>

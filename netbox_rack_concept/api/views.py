@@ -41,7 +41,7 @@ class RackConceptViewSet(NetBoxModelViewSet):
         tenant = data.get('tenant')
 
         try:
-            concept, warnings = deploy_utils.copy_rack_to_concept(
+            concept, warnings, cable_summary = deploy_utils.copy_rack_to_concept(
                 rack=rack,
                 name=data['name'],
                 status=data['status'],
@@ -60,6 +60,7 @@ class RackConceptViewSet(NetBoxModelViewSet):
 
         result = RackConceptSerializer(concept, context={'request': request}).data
         result['warnings'] = warnings
+        result['cables'] = cable_summary
         return Response(result, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'])

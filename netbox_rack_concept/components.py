@@ -9,12 +9,26 @@ that's what its device type's templates already describe - the same as a real de
 Placeholder devices without a device type have no templates to sync from; their
 components, if any, have to be added by hand.
 """
+from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from .choices import ConceptComponentTypeChoices
-from .models import ConceptComponent, ConceptPortMapping
+from dcim.models import Cable, ConsolePort, ConsoleServerPort, FrontPort, Interface, PowerOutlet, PowerPort, RearPort
 
-__all__ = ('sync_components',)
+from .choices import ConceptComponentTypeChoices
+from .models import ConceptCable, ConceptComponent, ConceptPortMapping
+
+__all__ = ('copy_cables', 'sync_components')
+
+# (our component type, the real dcim model that can terminate a real cable)
+CABLED_MODELS = (
+    (ConceptComponentTypeChoices.TYPE_INTERFACE, Interface),
+    (ConceptComponentTypeChoices.TYPE_CONSOLE_PORT, ConsolePort),
+    (ConceptComponentTypeChoices.TYPE_CONSOLE_SERVER_PORT, ConsoleServerPort),
+    (ConceptComponentTypeChoices.TYPE_POWER_PORT, PowerPort),
+    (ConceptComponentTypeChoices.TYPE_POWER_OUTLET, PowerOutlet),
+    (ConceptComponentTypeChoices.TYPE_FRONT_PORT, FrontPort),
+    (ConceptComponentTypeChoices.TYPE_REAR_PORT, RearPort),
+)
 
 # (our component type, DeviceType's reverse accessor for that template queryset)
 TEMPLATE_SOURCES = (
@@ -77,3 +91,73 @@ def sync_components(concept_device):
             mappings_created += 1
 
     return created, mappings_created
+
+
+@transaction.atomic
+def copy_cables(concept_devices):
+    """
+    Recreate, as ConceptCables, every real cable whose both ends sit on one of the
+    given concept devices' source devices (i.e. cables internal to whatever rack(s)
+    were just imported). A cable reaching a device outside that set can't be
+    represented here - the other end isn't part of the concept - and is skipped, along
+    with any multi-termination trunk cable, which ConceptCable's plain point-to-point
+    model can't hold. Only devices whose components have already been synced (see
+    sync_components) can have their cables copied.
+    Returns (copied, skipped).
+    """
+    device_map = {cd.source_device_id: cd for cd in concept_devices if cd.source_device_id}
+    if not device_map:
+        return 0, 0
+    device_ids = set(device_map)
+
+    component_lookup = {}
+    for component in ConceptComponent.objects.filter(device__in=device_map.values()).select_related('device'):
+        component_lookup[(component.device.source_device_id, component.name)] = component
+
+    cable_ids = set()
+    for _, model in CABLED_MODELS:
+        cable_ids.update(
+            model.objects.filter(device_id__in=device_ids, cable_id__isnull=False)
+            .values_list('cable_id', flat=True)
+        )
+
+    copied = skipped = 0
+    for cable in Cable.objects.filter(pk__in=cable_ids).prefetch_related('terminations'):
+        a_ends = [ct.termination for ct in cable.terminations.all() if ct.cable_end == 'A']
+        b_ends = [ct.termination for ct in cable.terminations.all() if ct.cable_end == 'B']
+        if len(a_ends) != 1 or len(b_ends) != 1:
+            # A multi-termination trunk cable - not something a point-to-point
+            # ConceptCable can represent.
+            skipped += 1
+            continue
+
+        a, b = a_ends[0], b_ends[0]
+        a_device_id, b_device_id = getattr(a, 'device_id', None), getattr(b, 'device_id', None)
+        if a_device_id not in device_ids or b_device_id not in device_ids:
+            # Reaches a device outside the set being copied.
+            skipped += 1
+            continue
+
+        component_a = component_lookup.get((a_device_id, a.name))
+        component_b = component_lookup.get((b_device_id, b.name))
+        if not (component_a and component_b):
+            skipped += 1
+            continue
+
+        concept_cable = ConceptCable(
+            termination_a=component_a,
+            termination_b=component_b,
+            status=cable.status,
+            type=cable.type or '',
+            color=cable.color or '',
+            label=cable.label,
+        )
+        try:
+            concept_cable.full_clean()
+        except ValidationError:
+            skipped += 1
+            continue
+        concept_cable.save()
+        copied += 1
+
+    return copied, skipped

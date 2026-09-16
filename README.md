@@ -35,11 +35,15 @@ Dazu:
 * **Klick auf eine leere HE** öffnet direkt „Add planned device", vorausgefüllt mit
   Position und Seite — genau wie bei einer echten Rack-Elevation. Den separaten
   „Add planned device"-Knopf gibt es dafür nicht mehr.
-* **Verkabelung von Konzept-Geräten** – Interfaces, Front-/Rear-Ports, Power-Ports/
-  -Outlets und Console-Ports lassen sich mit „Sync components" aus dem Gerätetyp
-  übernehmen (inkl. Front-↔Rear-Zuordnung von Patchpanels, 1:1 wie beim echten
-  Gerätetyp) und über „Connect" mit einem Concept Cable verbinden. Platzhalter ohne
-  Gerätetyp bekommen ihre Komponenten per Hand über „Add component".
+* **Verkabelung von Konzept-Geräten, 1:1 wie bei echten Geräten** – auf der
+  Geräte-Detailseite gibt es dieselben Tabs wie bei einem echten `dcim.Device`:
+  Interfaces, Front Ports, Rear Ports, Console Ports, Console Server Ports, Power
+  Ports, Power Outlets (gleiche Namen, gleiche Reihenfolge, Tab nur sichtbar wenn
+  belegt). „Sync components" übernimmt sie 1:1 aus den Component-Templates des
+  Gerätetyps, inkl. Front-↔Rear-Zuordnung von Patchpanels. Über „Connect" an jeder
+  unverkabelten Komponente wird sie mit einem Concept Cable verbunden. Ein „Add
+  Components"-Dropdown (genau wie am echten Gerät) legt neue Komponenten pro Typ an —
+  nötig für Platzhalter ohne Gerätetyp, die nichts zum Syncen haben.
 * Vollständige REST-API, Filter, CSV-Import/-Export, Bulk-Edit, Changelog, Journal,
   Tags, Custom Fields und globale Suche — wie bei jedem Core-Objekt.
 
@@ -66,6 +70,18 @@ verknüpft). Das hängt also nicht an der Rollenbezeichnung „Patchpanel", sond
 daran, ob der Gerätetyp Front-/Rear-Ports mit Zuordnung definiert — Kabel an der
 Vorderseite eines synchronisierten Patchpanel-Gerätetyps zeigen auf der Detailseite der
 Komponente sofort den passenden Rear-Port samt Position an.
+
+**Beim Kopieren eines echten Racks in ein Konzept** (und beim Zusammenführen zweier
+echter Racks, siehe unten) werden die Komponenten aller übernommenen Geräte automatisch
+synchronisiert, und jedes echte Kabel, dessen **beide** Enden innerhalb der kopierten
+Rack(s) liegen, wird als `ConceptCable` nachgebaut — Status, Typ, Farbe und Label
+inklusive. Kabel, die den Rack verlassen (zum Beispiel zum Uplink-Switch in einem
+anderen Rack), lassen sich naturgemäß nicht übernehmen, weil das Gegenstück nicht Teil
+des Konzepts ist; ebenso ausgelassen werden Mehrfach-Trunk-Kabel (z.B. MPO), da
+`ConceptCable` nur Punkt-zu-Punkt-Verbindungen kennt. Beides wird nach dem Kopieren als
+Warnung mit Anzahl gemeldet. Das Nachbilden der Verkabelung gilt nur für den Import
+**echter** Racks — beim Klonen oder Zusammenführen von Konzepten (die ja schon eigene
+Kabel haben können) bleibt die Verkabelung unverändert, wie bisher.
 
 ## Zusammenspiel mit den anderen Plugins
 
