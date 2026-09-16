@@ -10,7 +10,10 @@ def _enabled():
 
 
 class RackConceptButtons(PluginTemplateExtension):
-    """Adds "Copy to concept" to the button row of a rack, and lists derived concepts."""
+    """
+    Adds "Copy to concept" to the button row of a rack, "Merge into concept" to the
+    rack list's toolbar, and lists concepts derived from a rack.
+    """
     models = ['dcim.rack']
 
     def buttons(self):
@@ -21,6 +24,13 @@ class RackConceptButtons(PluginTemplateExtension):
         return self.render('netbox_rack_concept/inc/rack_copy_button.html', extra_context={
             'rack': self.context['object'],
         })
+
+    def list_buttons(self):
+        if not _enabled():
+            return ''
+        if not self.context['request'].user.has_perm('netbox_rack_concept.add_rackconcept'):
+            return ''
+        return self.render('netbox_rack_concept/inc/rack_list_merge_button.html')
 
     def right_page(self):
         if not _enabled():

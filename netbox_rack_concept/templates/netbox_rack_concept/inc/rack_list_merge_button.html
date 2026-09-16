@@ -1,0 +1,8 @@
+{% load i18n %}
+{% load static %}
+<a href="{% url 'plugins:netbox_rack_concept:racks_merge' %}" class="btn btn-outline-secondary"
+   id="concept-merge-racks-button" data-merge-url="{% url 'plugins:netbox_rack_concept:racks_merge' %}"
+   title="{% trans 'Select two racks below, then click this to combine them into one concept' %}">
+  <i class="mdi mdi-call-merge"></i> {% trans "Merge into concept" %}
+</a>
+<script src="{% static 'netbox_rack_concept/rack_list_merge.js' %}"></script>

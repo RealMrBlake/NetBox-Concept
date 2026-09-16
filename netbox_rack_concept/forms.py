@@ -22,6 +22,7 @@ __all__ = (
     'ConceptDeviceForm',
     'ConceptDeviceImportForm',
     'MergeConceptsForm',
+    'MergeRacksForm',
     'RackConceptBulkEditForm',
     'RackConceptCloneForm',
     'RackConceptFilterForm',
@@ -419,6 +420,85 @@ class MergeConceptsForm(forms.Form):
         bottom, top = cleaned.get('concept_bottom'), cleaned.get('concept_top')
         if bottom and top and bottom.pk == top.pk:
             raise forms.ValidationError(_('Choose two different concepts to merge.'))
+        return cleaned
+
+
+class MergeRacksForm(forms.Form):
+    """Combine two existing racks directly into one new, stacked blueprint."""
+    name = forms.CharField(
+        label=_('Concept name'),
+        max_length=100
+    )
+    status = forms.ChoiceField(
+        choices=ConceptStatusChoices,
+        initial=ConceptStatusChoices.STATUS_DRAFT
+    )
+    tenant_group = DynamicModelChoiceField(
+        queryset=TenantGroup.objects.all(),
+        required=False,
+        label=_('Tenant group')
+    )
+    tenant = DynamicModelChoiceField(
+        queryset=Tenant.objects.all(),
+        required=False,
+        query_params={'group_id': '$tenant_group'},
+        label=_('Tenant')
+    )
+    rack_bottom = DynamicModelChoiceField(
+        queryset=Rack.objects.all(),
+        label=_('Bottom rack'),
+        help_text=_('Keeps its planned positions unchanged')
+    )
+    rack_top = DynamicModelChoiceField(
+        queryset=Rack.objects.all(),
+        label=_('Top rack'),
+        help_text=_("Its devices are shifted up by the bottom rack's height")
+    )
+    include_devices = forms.BooleanField(
+        required=False,
+        initial=True,
+        label=_('Copy installed devices')
+    )
+    include_device_names = forms.BooleanField(
+        required=False,
+        initial=True,
+        label=_('Keep device names')
+    )
+    width = forms.ChoiceField(
+        choices=RackWidthChoices,
+        initial=RackWidthChoices.WIDTH_19IN,
+        label=_('Width of the combined rack')
+    )
+    u_height = forms.IntegerField(
+        required=False,
+        min_value=1,
+        max_value=100,
+        label=_('Height (U)'),
+        help_text=_('Leave empty to use the sum of both heights')
+    )
+    starting_unit = forms.IntegerField(
+        initial=1,
+        min_value=1,
+        label=_('Starting unit')
+    )
+    description = forms.CharField(max_length=200, required=False)
+
+    fieldsets = (
+        FieldSet('name', 'status', 'description', name=_('Concept')),
+        FieldSet('tenant_group', 'tenant', name=_('Tenancy')),
+        FieldSet('rack_bottom', 'rack_top', name=_('Sources')),
+        FieldSet('include_devices', 'include_device_names', name=_('Content')),
+        FieldSet('width', 'u_height', 'starting_unit', name=_('Combined size')),
+    )
+
+    def clean_width(self):
+        return int(self.cleaned_data['width'])
+
+    def clean(self):
+        cleaned = super().clean()
+        bottom, top = cleaned.get('rack_bottom'), cleaned.get('rack_top')
+        if bottom and top and bottom.pk == top.pk:
+            raise forms.ValidationError(_('Choose two different racks to merge.'))
         return cleaned
 
 

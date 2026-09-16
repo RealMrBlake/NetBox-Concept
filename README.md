@@ -15,6 +15,7 @@ Wenn die Planung steht, wird das Konzept per Knopfdruck in echte NetBox-Objekte
 | Echtes Rack → Konzept | Button **„Copy to concept"** auf der Rack-Detailseite. Größe des Konzept-Racks (Breite, Höhe, Startunit) ist dabei frei wählbar; Geräte, die in der gewählten Größe keinen Platz mehr finden, werden ausgelassen und als Warnung gemeldet |
 | Konzept → Konzept (Variante) | Button **„Clone concept"** auf der Konzept-Detailseite |
 | 2 Konzepte → 1 größeres Konzept | Button **„Merge"** im Menü bzw. **„Merge with another"** auf der Konzept-Detailseite — stapelt z.B. zwei halbhohe Racks zu einem vollen; das obere Konzept wird um die Höhe des unteren nach oben verschoben, beide Quellen bleiben unverändert |
+| 2 echte Racks → 1 neues Konzept | Button **„Merge into concept"** über der echten Rack-Liste. Zwei Racks per Checkbox auswählen (wie bei jeder anderen Bulk-Aktion) und auf den Button klicken — vorausgefüllt landet man auf derselben Merge-Maske wie oben, diesmal direkt mit den zwei echten Racks als Quelle |
 | Konzept → echte Racks (n-fach) | Button **„Deploy to NetBox"**, mit Namensschema `DC1-R{n:02d}` |
 | Konzept von Hand anlegen | Menü **Rack Concepts → Rack Concepts → +** |
 
@@ -23,8 +24,10 @@ Dazu:
 * **Elevation mit Drag & Drop** – Geräte per Maus verschieben, serverseitig validiert.
   Ein ungültiger Zug wird abgelehnt und ändert nichts.
 * **Geräte mit Bild und Text** – ist am Gerätetyp ein Front-/Rear-Bild hinterlegt, wird
-  es im Elevation-Block angezeigt, mit halbtransparentem Label darüber; ohne Bild bleibt
-  es bei der reinen Farbfläche mit Text.
+  es im Elevation-Block angezeigt; darüber liegt der Gerätename als weiße, schwarz
+  konturierte Schrift (kein dunkler Balken). Ein Dropdown über der Elevation schaltet
+  zwischen „Images and labels", „Images only" und „Labels only" um — genau wie bei
+  echten Racks in NetBox, inklusive Merken der Wahl im Browser.
 * **Teilbreiten** (1/1, 1/2, 1/3, 1/4 plus horizontale Slot-Position), passend zum
   Teilbreiten-Feature von `netbox_utilities`.
 * **Mandant und Mandantengruppe** an Konzept und an jedem geplanten Gerät.

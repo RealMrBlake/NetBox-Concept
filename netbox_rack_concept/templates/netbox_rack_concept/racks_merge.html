@@ -1,0 +1,28 @@
+{% extends 'base/layout.html' %}
+{% load i18n %}
+{% load form_helpers %}
+
+{% block title %}{% trans "Merge Racks into a Concept" %}{% endblock %}
+
+{% block content %}
+<form action="" method="post">
+  {% csrf_token %}
+  <div class="row">
+    <div class="col col-md-8 offset-md-2">
+      <div class="card">
+        <h2 class="card-header">{% trans "Merge two racks into one concept" %}</h2>
+        <div class="card-body">
+          <p class="text-muted">
+            {% trans "Snapshots both racks' devices into one new blueprint - the top rack's devices shifted up by the bottom rack's height. Neither rack is modified." %}
+          </p>
+          {% render_form form %}
+        </div>
+        <div class="card-footer text-end">
+          <a href="{{ return_url }}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
+          <button type="submit" class="btn btn-primary">{% trans "Create concept" %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

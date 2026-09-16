@@ -1,12 +1,13 @@
 """
-The four copy paths: rack -> concept, concept -> concept, concept -> rack(s), and
-concept + concept -> one merged concept.
+The five copy paths: rack -> concept, concept -> concept, concept -> rack(s),
+concept + concept -> one merged concept, and rack + rack -> one merged concept.
 """
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.translation import gettext as _
 
+from dcim.choices import RackWidthChoices
 from dcim.models import Device, Rack
 
 from .choices import ConceptDeviceStatusChoices, ConceptStatusChoices
@@ -18,6 +19,7 @@ __all__ = (
     'copy_rack_to_concept',
     'deploy_concept',
     'merge_concepts',
+    'merge_racks_to_concept',
     'validate_deployment',
 )
 
@@ -29,6 +31,14 @@ GEOMETRY_FIELDS = (
 
 def _config():
     return settings.PLUGINS_CONFIG.get('netbox_rack_concept', {})
+
+
+def _rack_geometry(rack, field):
+    """A rack's own value for `field`, falling back to its rack type when left empty."""
+    value = getattr(rack, field, None)
+    if value in (None, '') and rack.rack_type:
+        value = getattr(rack.rack_type, field, None)
+    return value
 
 
 #
@@ -59,10 +69,7 @@ def copy_rack_to_concept(rack, name, status=ConceptStatusChoices.STATUS_DRAFT, t
         source_rack=rack,
     )
     for field in GEOMETRY_FIELDS:
-        value = getattr(rack, field, None)
-        # A rack built from a rack type may leave its own dimension fields empty.
-        if value in (None, '') and rack.rack_type:
-            value = getattr(rack.rack_type, field, None)
+        value = _rack_geometry(rack, field)
         if value not in (None, ''):
             setattr(concept, field, value)
 
@@ -188,6 +195,83 @@ def merge_concepts(concept_bottom, concept_top, name, status=ConceptStatusChoice
     _copy_devices(concept_top, offset)
 
     return merged, warnings
+
+
+#
+# dcim.Rack + dcim.Rack -> RackConcept (stacked)
+#
+
+@transaction.atomic
+def merge_racks_to_concept(rack_bottom, rack_top, name, status=ConceptStatusChoices.STATUS_DRAFT, tenant=None,
+                           tenant_group=None, width=None, u_height=None, starting_unit=1, description='',
+                           include_devices=True, include_device_names=True):
+    """
+    Combine two real racks directly into one new, taller blueprint - e.g. two
+    half-height racks planned as one full-height rack. rack_bottom's devices keep their
+    position; rack_top's are shifted up by rack_bottom's height. Neither source rack is
+    modified. Returns (concept, warnings).
+    """
+    bottom_height = _rack_geometry(rack_bottom, 'u_height') or rack_bottom.u_height
+    top_height = _rack_geometry(rack_top, 'u_height') or rack_top.u_height
+    total_height = u_height or (bottom_height + top_height)
+
+    concept = RackConcept(
+        name=name,
+        status=status,
+        tenant=tenant,
+        tenant_group=tenant_group,
+        description=description,
+        width=width or _rack_geometry(rack_bottom, 'width') or RackWidthChoices.WIDTH_19IN,
+        u_height=total_height,
+        starting_unit=starting_unit,
+        form_factor=_rack_geometry(rack_bottom, 'form_factor') or '',
+        airflow=rack_bottom.airflow,
+        default_site=rack_bottom.site,
+        default_location=rack_bottom.location,
+        rack_role=rack_bottom.role,
+        source_rack=rack_bottom,
+    )
+    concept.full_clean()
+    concept.save()
+
+    warnings = []
+
+    def _copy_from_rack(rack, shift):
+        if not include_devices:
+            return
+        devices = Device.objects.filter(rack=rack, position__isnull=False).select_related(
+            'device_type', 'role', 'platform', 'tenant'
+        )
+        for device in devices:
+            fraction, horizontal = read_partial_width(device)
+            concept_device = ConceptDevice(
+                concept=concept,
+                name=(device.name or '') if include_device_names else '',
+                status=ConceptDeviceStatusChoices.STATUS_EXISTING,
+                device_type=device.device_type,
+                role=device.role,
+                platform=device.platform,
+                tenant=device.tenant,
+                position=device.position + shift,
+                face=device.face,
+                width_fraction=fraction,
+                horizontal_position=horizontal,
+                serial=device.serial if include_device_names else '',
+                source_device=device,
+            )
+            try:
+                concept_device.full_clean()
+            except ValidationError:
+                warnings.append(_(
+                    '%(device)s from %(rack)s does not fit at its shifted position and was left out.'
+                ) % {'device': device, 'rack': rack})
+                continue
+            concept_device.save()
+
+    _copy_from_rack(rack_bottom, 0)
+    _copy_from_rack(rack_top, bottom_height)
+
+    return concept, warnings
 
 
 #

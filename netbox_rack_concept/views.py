@@ -23,6 +23,7 @@ from .models import ConceptDevice, RackConcept
 __all__ = (
     'ConceptDeviceView',
     'MergeConceptsView',
+    'MergeRacksToConceptView',
     'RackConceptView',
 )
 
@@ -282,6 +283,60 @@ class MergeConceptsView(ObjectPermissionRequiredMixin, View):
         return render(request, 'netbox_rack_concept/concept_merge.html', {
             'form': form,
             'return_url': reverse('plugins:netbox_rack_concept:rackconcept_list'),
+        })
+
+
+class MergeRacksToConceptView(ObjectPermissionRequiredMixin, View):
+    """Combine two real racks directly into one new, stacked blueprint."""
+    queryset = RackConcept.objects.all()
+
+    def get_required_permission(self):
+        return 'netbox_rack_concept.add_rackconcept'
+
+    def get(self, request):
+        form = forms.MergeRacksForm(initial={
+            'rack_bottom': request.GET.get('rack_bottom'),
+            'rack_top': request.GET.get('rack_top'),
+        })
+        return render(request, 'netbox_rack_concept/racks_merge.html', {
+            'form': form,
+            'return_url': reverse('dcim:rack_list'),
+        })
+
+    def post(self, request):
+        form = forms.MergeRacksForm(request.POST)
+
+        if form.is_valid():
+            try:
+                concept, warnings = deploy.merge_racks_to_concept(
+                    rack_bottom=form.cleaned_data['rack_bottom'],
+                    rack_top=form.cleaned_data['rack_top'],
+                    name=form.cleaned_data['name'],
+                    status=form.cleaned_data['status'],
+                    tenant=form.cleaned_data['tenant'],
+                    tenant_group=form.cleaned_data['tenant_group'],
+                    include_devices=form.cleaned_data['include_devices'],
+                    include_device_names=form.cleaned_data['include_device_names'],
+                    width=form.cleaned_data['width'],
+                    u_height=form.cleaned_data['u_height'],
+                    starting_unit=form.cleaned_data['starting_unit'],
+                    description=form.cleaned_data['description'],
+                )
+            except ValidationError as exc:
+                form.add_error(None, exc)
+            else:
+                for warning in warnings:
+                    messages.warning(request, warning)
+                messages.success(request, _('Created concept %(concept)s from %(bottom)s and %(top)s.') % {
+                    'concept': concept,
+                    'bottom': form.cleaned_data['rack_bottom'],
+                    'top': form.cleaned_data['rack_top'],
+                })
+                return redirect(concept.get_absolute_url())
+
+        return render(request, 'netbox_rack_concept/racks_merge.html', {
+            'form': form,
+            'return_url': reverse('dcim:rack_list'),
         })
 
 

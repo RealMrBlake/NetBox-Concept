@@ -128,12 +128,20 @@
 
   <div class="col col-md-6">
     <div class="card">
-      <h2 class="card-header">
-        {% trans "Elevation" %}
-        {% if perms.netbox_rack_concept.change_conceptdevice %}
-          <span class="badge text-bg-secondary float-end">{% trans "Drag devices to move them" %}</span>
-        {% endif %}
-      </h2>
+      <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h2 class="mb-0">{% trans "Elevation" %}</h2>
+        <div class="d-flex align-items-center gap-2">
+          <select id="concept-elevation-view" class="form-select form-select-sm" style="width: auto;"
+                  aria-label="{% trans 'Images and labels' %}">
+            <option value="images-and-labels">{% trans "Images and labels" %}</option>
+            <option value="images-only">{% trans "Images only" %}</option>
+            <option value="labels-only">{% trans "Labels only" %}</option>
+          </select>
+          {% if perms.netbox_rack_concept.change_conceptdevice %}
+            <span class="badge text-bg-secondary">{% trans "Drag devices to move them" %}</span>
+          {% endif %}
+        </div>
+      </div>
       <div class="card-body">
         <div class="d-flex justify-content-around flex-wrap"
              id="concept-elevations"

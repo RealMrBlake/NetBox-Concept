@@ -1,4 +1,51 @@
 /*
+ * View selector: show/hide device images and their labels, mirroring the
+ * "images-and-labels / images-only / labels-only" control on NetBox's own rack
+ * elevation. The plain (non-image) label is never toggled by this - it's always in the
+ * markup, and an opaque image simply sits on top of it, exactly as NetBox does it.
+ * Runs independently of edit permissions, so it works for read-only users too.
+ */
+(function () {
+    'use strict';
+
+    const STORAGE_KEY = 'netbox_rack_concept:elevation-view';
+    const select = document.getElementById('concept-elevation-view');
+    const container = document.getElementById('concept-elevations');
+    if (!select || !container) {
+        return;
+    }
+
+    function applyView(view) {
+        const showImages = view !== 'labels-only';
+        const showImageLabels = view === 'images-and-labels';
+        container.querySelectorAll('image.device-image').forEach(function (el) {
+            el.classList.toggle('hidden', !showImages);
+        });
+        container.querySelectorAll('.device-image-label').forEach(function (el) {
+            el.classList.toggle('hidden', !showImageLabels);
+        });
+    }
+
+    let initial = 'images-and-labels';
+    try {
+        initial = window.localStorage.getItem(STORAGE_KEY) || initial;
+    } catch (e) {
+        // Storage may be unavailable (private browsing, blocked cookies); fall back silently.
+    }
+    select.value = initial;
+    applyView(initial);
+
+    select.addEventListener('change', function () {
+        applyView(select.value);
+        try {
+            window.localStorage.setItem(STORAGE_KEY, select.value);
+        } catch (e) {
+            // Nothing to do if storage isn't available - the choice just won't persist.
+        }
+    });
+})();
+
+/*
  * Drag & drop for concept rack elevations.
  *
  * netbox-reorder-rack cannot be reused here: it moves dcim.Device rows, and a concept
