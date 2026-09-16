@@ -1,7 +1,8 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from dcim.choices import DeviceFaceChoices, RackAirflowChoices, RackFormFactorChoices, RackWidthChoices
+from dcim.choices import CableTypeChoices, DeviceFaceChoices, LinkStatusChoices, RackAirflowChoices, \
+    RackFormFactorChoices, RackWidthChoices
 from dcim.models import DeviceRole, DeviceType, Location, Platform, Rack, RackRole, RackType, Site
 from netbox.forms import NetBoxModelBulkEditForm, NetBoxModelFilterSetForm, NetBoxModelForm, NetBoxModelImportForm
 from tenancy.models import Tenant, TenantGroup
@@ -12,10 +13,15 @@ from utilities.forms.fields import (
 from utilities.forms.rendering import FieldSet
 from utilities.forms.widgets import BulkEditNullBooleanSelect
 
-from .choices import ConceptDeviceStatusChoices, ConceptStatusChoices, WidthFractionChoices
-from .models import ConceptDevice, RackConcept
+from .choices import ConceptComponentTypeChoices, ConceptDeviceStatusChoices, ConceptStatusChoices, \
+    WidthFractionChoices
+from .models import ConceptCable, ConceptComponent, ConceptDevice, RackConcept
 
 __all__ = (
+    'ConceptCableForm',
+    'ConceptCableFilterForm',
+    'ConceptComponentForm',
+    'ConceptComponentFilterForm',
     'ConceptDeployForm',
     'ConceptDeviceBulkEditForm',
     'ConceptDeviceFilterForm',
@@ -631,3 +637,125 @@ class ConceptDeployForm(forms.Form):
             })
         cleaned['rack_names'] = names
         return cleaned
+
+
+#
+# Cabling
+#
+
+class ConceptComponentForm(NetBoxModelForm):
+    device = DynamicModelChoiceField(
+        queryset=ConceptDevice.objects.all(),
+        label=_('Concept device')
+    )
+
+    fieldsets = (
+        FieldSet('device', 'component_type', 'name', 'label', 'description', 'tags', name=_('Component')),
+        FieldSet('port_type', 'positions', 'color', name=_('Attributes')),
+    )
+
+    class Meta:
+        model = ConceptComponent
+        fields = (
+            'device', 'component_type', 'name', 'label', 'port_type', 'positions', 'color', 'description', 'tags',
+        )
+
+
+class ConceptComponentFilterForm(NetBoxModelFilterSetForm):
+    model = ConceptComponent
+
+    device_id = DynamicModelMultipleChoiceField(
+        queryset=ConceptDevice.objects.all(),
+        required=False,
+        label=_('Concept device')
+    )
+    concept_id = DynamicModelMultipleChoiceField(
+        queryset=RackConcept.objects.all(),
+        required=False,
+        label=_('Rack concept')
+    )
+    component_type = forms.MultipleChoiceField(choices=ConceptComponentTypeChoices, required=False)
+    connected = forms.NullBooleanField(required=False, widget=forms.Select(choices=(
+        ('', '---------'), ('true', _('Connected')), ('false', _('Not connected')),
+    )))
+    tag = TagFilterField(model)
+
+    fieldsets = (
+        FieldSet('q', 'filter_id', 'tag'),
+        FieldSet('device_id', 'concept_id', 'component_type', 'connected', name=_('Attributes')),
+    )
+
+
+class ConceptCableForm(NetBoxModelForm):
+    """
+    Mirrors the shape of NetBox's own cable-connect form: pick a device, then a
+    component on it, for each end.
+    """
+    concept = DynamicModelChoiceField(
+        queryset=RackConcept.objects.all(),
+        label=_('Rack concept'),
+        help_text=_('Both ends must belong to devices in this concept')
+    )
+    termination_a_device = DynamicModelChoiceField(
+        queryset=ConceptDevice.objects.all(),
+        label=_('Device A'),
+        query_params={'concept_id': '$concept'}
+    )
+    termination_a = DynamicModelChoiceField(
+        queryset=ConceptComponent.objects.all(),
+        label=_('Component A'),
+        query_params={'device_id': '$termination_a_device', 'connected': 'false'}
+    )
+    termination_b_device = DynamicModelChoiceField(
+        queryset=ConceptDevice.objects.all(),
+        label=_('Device B'),
+        query_params={'concept_id': '$concept'}
+    )
+    termination_b = DynamicModelChoiceField(
+        queryset=ConceptComponent.objects.all(),
+        label=_('Component B'),
+        query_params={'device_id': '$termination_b_device', 'connected': 'false'}
+    )
+    comments = CommentField()
+
+    fieldsets = (
+        FieldSet('concept', name=_('Scope')),
+        FieldSet('termination_a_device', 'termination_a', name=_('Side A')),
+        FieldSet('termination_b_device', 'termination_b', name=_('Side B')),
+        FieldSet('status', 'type', 'color', 'label', 'description', 'tags', name=_('Cable')),
+    )
+
+    class Meta:
+        model = ConceptCable
+        fields = (
+            'termination_a', 'termination_b', 'status', 'type', 'color', 'label', 'description', 'comments', 'tags',
+        )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # concept/termination_*_device are UI-only helpers for the cascading selects
+        # above, not model fields - when editing an existing cable, seed them from the
+        # components already chosen so the dropdowns show the right device on load.
+        instance = self.instance
+        if instance and instance.pk:
+            self.fields['concept'].initial = instance.termination_a.device.concept_id
+            self.fields['termination_a_device'].initial = instance.termination_a.device_id
+            self.fields['termination_b_device'].initial = instance.termination_b.device_id
+
+
+class ConceptCableFilterForm(NetBoxModelFilterSetForm):
+    model = ConceptCable
+
+    concept_id = DynamicModelMultipleChoiceField(
+        queryset=RackConcept.objects.all(),
+        required=False,
+        label=_('Rack concept')
+    )
+    status = forms.MultipleChoiceField(choices=LinkStatusChoices, required=False)
+    type = forms.MultipleChoiceField(choices=CableTypeChoices, required=False)
+    tag = TagFilterField(model)
+
+    fieldsets = (
+        FieldSet('q', 'filter_id', 'tag'),
+        FieldSet('concept_id', 'status', 'type', name=_('Attributes')),
+    )

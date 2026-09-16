@@ -1,0 +1,109 @@
+{% extends 'generic/object.html' %}
+{% load i18n %}
+{% load helpers %}
+
+{% block extra_controls %}
+  {{ block.super }}
+  {% if not cable and perms.netbox_rack_concept.add_conceptcable %}
+    <a href="{% url 'plugins:netbox_rack_concept:conceptcable_add' %}?concept={{ object.device.concept_id }}&amp;termination_a_device={{ object.device_id }}&amp;termination_a={{ object.pk }}"
+       class="btn btn-primary">
+      <i class="mdi mdi-ethernet-cable"></i> {% trans "Connect" %}
+    </a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+  <div class="col col-md-6">
+    <div class="card">
+      <h2 class="card-header">{% trans "Component" %}</h2>
+      <table class="table table-hover attr-table">
+        <tr>
+          <th scope="row">{% trans "Device" %}</th>
+          <td>{{ object.device|linkify }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Concept" %}</th>
+          <td>{{ object.device.concept|linkify }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Name" %}</th>
+          <td>{{ object.name }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Label" %}</th>
+          <td>{{ object.label|placeholder }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Component type" %}</th>
+          <td>{{ object.get_component_type_display }}</td>
+        </tr>
+        <tr>
+          <th scope="row">{% trans "Type" %}</th>
+          <td>{{ object.port_type|placeholder }}</td>
+        </tr>
+        {% if object.is_pass_through %}
+          <tr>
+            <th scope="row">{% trans "Positions" %}</th>
+            <td>{{ object.positions }}</td>
+          </tr>
+        {% endif %}
+        <tr>
+          <th scope="row">{% trans "Description" %}</th>
+          <td>{{ object.description|placeholder }}</td>
+        </tr>
+      </table>
+    </div>
+
+    {% if object.is_pass_through %}
+      <div class="card">
+        <h2 class="card-header">{% trans "Pass-through mapping" %}</h2>
+        {% if paired_components %}
+          <table class="table table-hover attr-table">
+            {% for component, own_position, other_position in paired_components %}
+              <tr>
+                <th scope="row">{% trans "Position" %} {{ own_position }}</th>
+                <td>{{ component|linkify }} &middot; {% trans "position" %} {{ other_position }}</td>
+              </tr>
+            {% endfor %}
+          </table>
+        {% else %}
+          <div class="card-body text-muted">
+            {% trans "No mapping to a port on the other side. Sync the device's components again if this looks wrong." %}
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="col col-md-6">
+    <div class="card">
+      <h2 class="card-header">{% trans "Connection" %}</h2>
+      {% if cable %}
+        <table class="table table-hover attr-table">
+          <tr>
+            <th scope="row">{% trans "Cable" %}</th>
+            <td>{{ cable|linkify }}</td>
+          </tr>
+          <tr>
+            <th scope="row">{% trans "Status" %}</th>
+            <td>{% badge cable.get_status_display bg_color=cable.get_status_color %}</td>
+          </tr>
+          <tr>
+            <th scope="row">{% trans "Connected to" %}</th>
+            <td>
+              {% if cable.termination_a_id == object.pk %}
+                {{ cable.termination_b.device|linkify }} &middot; {{ cable.termination_b|linkify }}
+              {% else %}
+                {{ cable.termination_a.device|linkify }} &middot; {{ cable.termination_a|linkify }}
+              {% endif %}
+            </td>
+          </tr>
+        </table>
+      {% else %}
+        <div class="card-body text-muted">{% trans "Not connected." %}</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

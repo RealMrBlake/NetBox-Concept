@@ -59,3 +59,32 @@ class WidthFractionChoices(ChoiceSet):
 # Least common multiple of all supported denominators. The elevation is laid out
 # on this many lanes so that every fraction lands on an integer lane boundary.
 LANE_COUNT = 12
+
+
+class ConceptComponentTypeChoices(ChoiceSet):
+    """
+    The kinds of pluggable component a planned device can carry. One shared model
+    covers all of them (see ConceptComponent) rather than mirroring dcim's seven
+    separate component models - a blueprint only needs enough detail to say what a
+    cable plugs into, not full per-type validation.
+    """
+    TYPE_INTERFACE = 'interface'
+    TYPE_FRONT_PORT = 'front-port'
+    TYPE_REAR_PORT = 'rear-port'
+    TYPE_CONSOLE_PORT = 'console-port'
+    TYPE_CONSOLE_SERVER_PORT = 'console-server-port'
+    TYPE_POWER_PORT = 'power-port'
+    TYPE_POWER_OUTLET = 'power-outlet'
+
+    CHOICES = [
+        (TYPE_INTERFACE, 'Interface', 'blue'),
+        (TYPE_FRONT_PORT, 'Front port', 'orange'),
+        (TYPE_REAR_PORT, 'Rear port', 'yellow'),
+        (TYPE_CONSOLE_PORT, 'Console port', 'teal'),
+        (TYPE_CONSOLE_SERVER_PORT, 'Console server port', 'cyan'),
+        (TYPE_POWER_PORT, 'Power port', 'red'),
+        (TYPE_POWER_OUTLET, 'Power outlet', 'pink'),
+    ]
+
+    #: Component types that are pass-through ports and can appear in a ConceptPortMapping.
+    PATCH_TYPES = (TYPE_FRONT_PORT, TYPE_REAR_PORT)

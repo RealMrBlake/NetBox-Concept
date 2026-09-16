@@ -3,9 +3,11 @@ from django.utils.translation import gettext_lazy as _
 
 from netbox.tables import NetBoxTable, columns
 
-from .models import ConceptDeployment, ConceptDevice, RackConcept
+from .models import ConceptCable, ConceptComponent, ConceptDeployment, ConceptDevice, RackConcept
 
 __all__ = (
+    'ConceptCableTable',
+    'ConceptComponentTable',
     'ConceptDeploymentTable',
     'ConceptDeviceElevationTable',
     'ConceptDeviceTable',
@@ -105,3 +107,66 @@ class ConceptDeploymentTable(tables.Table):
         fields = ('rack_name', 'rack', 'device_count', 'user', 'created')
         attrs = {'class': 'table table-hover object-list'}
         empty_text = _('This concept has not been deployed yet.')
+
+
+class ConceptComponentTable(NetBoxTable):
+    name = tables.Column(linkify=True)
+    device = tables.Column(linkify=True, verbose_name=_('Device'))
+    concept = tables.Column(accessor='device__concept', linkify=True, verbose_name=_('Concept'))
+    component_type = columns.ChoiceFieldColumn()
+    color = columns.ColorColumn()
+    connection = tables.Column(
+        accessor='cable', linkify=True, orderable=False, verbose_name=_('Connection'), empty_values=()
+    )
+    connect = tables.TemplateColumn(
+        template_code="""
+            {% load i18n %}
+            {% if not record.is_connected %}
+              <a href="{% url 'plugins:netbox_rack_concept:conceptcable_add' %}?concept={{ record.device.concept_id }}&amp;termination_a_device={{ record.device_id }}&amp;termination_a={{ record.pk }}"
+                 class="btn btn-sm btn-primary">{% trans "Connect" %}</a>
+            {% endif %}
+        """,
+        verbose_name='',
+        orderable=False
+    )
+    tags = columns.TagColumn(url_name='plugins:netbox_rack_concept:conceptcomponent_list')
+
+    class Meta(NetBoxTable.Meta):
+        model = ConceptComponent
+        fields = (
+            'pk', 'id', 'name', 'label', 'device', 'concept', 'component_type', 'port_type', 'positions', 'color',
+            'connection', 'connect', 'description', 'tags', 'created', 'last_updated',
+        )
+        default_columns = ('name', 'device', 'component_type', 'port_type', 'connection', 'connect')
+
+    def render_connection(self, value, record):
+        return value if value else _('Not connected')
+
+
+class ConceptCableTable(NetBoxTable):
+    id = tables.Column(linkify=True, verbose_name=_('ID'))
+    label = tables.Column(linkify=True)
+    concept = tables.Column(accessor='termination_a__device__concept', linkify=True, verbose_name=_('Concept'))
+    status = columns.ChoiceFieldColumn()
+    type = columns.ChoiceFieldColumn()
+    color = columns.ColorColumn()
+    termination_a_device = tables.Column(
+        accessor='termination_a__device', linkify=True, verbose_name=_('Device A')
+    )
+    termination_a = tables.Column(linkify=True, verbose_name=_('Component A'))
+    termination_b_device = tables.Column(
+        accessor='termination_b__device', linkify=True, verbose_name=_('Device B')
+    )
+    termination_b = tables.Column(linkify=True, verbose_name=_('Component B'))
+    tags = columns.TagColumn(url_name='plugins:netbox_rack_concept:conceptcable_list')
+
+    class Meta(NetBoxTable.Meta):
+        model = ConceptCable
+        fields = (
+            'pk', 'id', 'label', 'concept', 'status', 'type', 'color', 'termination_a_device', 'termination_a',
+            'termination_b_device', 'termination_b', 'description', 'tags', 'created', 'last_updated',
+        )
+        default_columns = (
+            'id', 'concept', 'status', 'type', 'termination_a_device', 'termination_a', 'termination_b_device',
+            'termination_b',
+        )

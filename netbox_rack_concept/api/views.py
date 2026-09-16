@@ -11,10 +11,10 @@ from netbox.api.viewsets import NetBoxModelViewSet
 from .. import filtersets
 from .. import deploy as deploy_utils
 from ..elevation import get_elevations
-from ..models import ConceptDevice, RackConcept
+from ..models import ConceptCable, ConceptComponent, ConceptDevice, RackConcept
 from .serializers import (
-    ConceptDeploySerializer, ConceptDeviceSerializer, MergeConceptsSerializer, RackConceptCloneSerializer,
-    RackConceptSerializer, RackCopySerializer,
+    ConceptCableSerializer, ConceptComponentSerializer, ConceptDeploySerializer, ConceptDeviceSerializer,
+    MergeConceptsSerializer, RackConceptCloneSerializer, RackConceptSerializer, RackCopySerializer,
 )
 
 __all__ = (
@@ -204,3 +204,17 @@ class ConceptDeviceViewSet(NetBoxModelViewSet):
     )
     serializer_class = ConceptDeviceSerializer
     filterset_class = filtersets.ConceptDeviceFilterSet
+
+
+class ConceptComponentViewSet(NetBoxModelViewSet):
+    queryset = ConceptComponent.objects.prefetch_related('tags').select_related('device', 'device__concept')
+    serializer_class = ConceptComponentSerializer
+    filterset_class = filtersets.ConceptComponentFilterSet
+
+
+class ConceptCableViewSet(NetBoxModelViewSet):
+    queryset = ConceptCable.objects.prefetch_related('tags').select_related(
+        'termination_a', 'termination_a__device', 'termination_b', 'termination_b__device'
+    )
+    serializer_class = ConceptCableSerializer
+    filterset_class = filtersets.ConceptCableFilterSet

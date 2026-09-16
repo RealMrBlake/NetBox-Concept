@@ -16,11 +16,13 @@ from dcim.models import Rack
 from netbox.views import generic
 from utilities.views import ObjectPermissionRequiredMixin, ViewTab, register_model_view
 
-from . import deploy, filtersets, forms, tables
+from . import components, deploy, filtersets, forms, tables
 from .elevation import get_elevations
-from .models import ConceptDevice, RackConcept
+from .models import ConceptCable, ConceptComponent, ConceptDevice, RackConcept
 
 __all__ = (
+    'ConceptCableView',
+    'ConceptComponentView',
     'ConceptDeviceView',
     'MergeConceptsView',
     'MergeRacksToConceptView',
@@ -137,6 +139,50 @@ class ConceptDeviceView(generic.ObjectView):
         'concept', 'device_type', 'device_type__manufacturer', 'role', 'platform', 'tenant', 'source_device'
     )
     template_name = 'netbox_rack_concept/conceptdevice.html'
+
+    def get_extra_context(self, request, instance):
+        component_table = tables.ConceptComponentTable(
+            instance.components.select_related('device').order_by('component_type', 'name'),
+            exclude=('device', 'concept'),
+            orderable=False,
+        )
+        component_table.configure(request)
+        return {
+            'component_table': component_table,
+        }
+
+
+@register_model_view(ConceptDevice, 'sync_components')
+class ConceptDeviceSyncComponentsView(ObjectPermissionRequiredMixin, View):
+    """Populate a device's components from its device type's templates."""
+    queryset = ConceptDevice.objects.all()
+
+    def get_required_permission(self):
+        return 'netbox_rack_concept.add_conceptcomponent'
+
+    def get(self, request, pk):
+        device = get_object_or_404(self.queryset.restrict(request.user, 'view'), pk=pk)
+        return render(request, 'netbox_rack_concept/conceptdevice_sync_components.html', {
+            'object': device,
+            'return_url': device.get_absolute_url(),
+        })
+
+    def post(self, request, pk):
+        device = get_object_or_404(self.queryset.restrict(request.user, 'view'), pk=pk)
+
+        if device.device_type is None:
+            messages.error(request, _('%(device)s has no device type to sync components from.') % {'device': device})
+            return redirect(device.get_absolute_url())
+
+        created, mapped = components.sync_components(device)
+        if created:
+            messages.success(request, _('Created %(count)s component(s).') % {'count': created})
+        else:
+            messages.info(request, _('No new components to create; everything is already in sync.'))
+        if mapped:
+            messages.success(request, _('Mapped %(count)s front/rear port pair(s).') % {'count': mapped})
+
+        return redirect(device.get_absolute_url())
 
 
 @register_model_view(ConceptDevice, 'add', detail=False)
@@ -506,3 +552,87 @@ class RackConceptReorderView(ObjectPermissionRequiredMixin, View):
             return JsonResponse({'error': ' '.join(exc.messages)}, status=400)
 
         return JsonResponse({'status': 'ok', 'updated': len(updated)})
+
+
+#
+# Concept components
+#
+
+@register_model_view(ConceptComponent, 'list', path='', detail=False)
+class ConceptComponentListView(generic.ObjectListView):
+    queryset = ConceptComponent.objects.select_related('device', 'device__concept')
+    table = tables.ConceptComponentTable
+    filterset = filtersets.ConceptComponentFilterSet
+    filterset_form = forms.ConceptComponentFilterForm
+
+
+@register_model_view(ConceptComponent)
+class ConceptComponentView(generic.ObjectView):
+    queryset = ConceptComponent.objects.select_related('device', 'device__concept')
+    template_name = 'netbox_rack_concept/conceptcomponent.html'
+
+    def get_extra_context(self, request, instance):
+        return {
+            'paired_components': instance.get_paired_components(),
+            'cable': instance.cable,
+        }
+
+
+@register_model_view(ConceptComponent, 'add', detail=False)
+@register_model_view(ConceptComponent, 'edit')
+class ConceptComponentEditView(generic.ObjectEditView):
+    queryset = ConceptComponent.objects.all()
+    form = forms.ConceptComponentForm
+
+
+@register_model_view(ConceptComponent, 'delete')
+class ConceptComponentDeleteView(generic.ObjectDeleteView):
+    queryset = ConceptComponent.objects.all()
+
+
+@register_model_view(ConceptComponent, 'bulk_delete', path='delete', detail=False)
+class ConceptComponentBulkDeleteView(generic.BulkDeleteView):
+    queryset = ConceptComponent.objects.select_related('device')
+    filterset = filtersets.ConceptComponentFilterSet
+    table = tables.ConceptComponentTable
+
+
+#
+# Concept cables
+#
+
+@register_model_view(ConceptCable, 'list', path='', detail=False)
+class ConceptCableListView(generic.ObjectListView):
+    queryset = ConceptCable.objects.select_related(
+        'termination_a', 'termination_a__device', 'termination_b', 'termination_b__device'
+    )
+    table = tables.ConceptCableTable
+    filterset = filtersets.ConceptCableFilterSet
+    filterset_form = forms.ConceptCableFilterForm
+
+
+@register_model_view(ConceptCable)
+class ConceptCableView(generic.ObjectView):
+    queryset = ConceptCable.objects.select_related(
+        'termination_a', 'termination_a__device', 'termination_b', 'termination_b__device'
+    )
+    template_name = 'netbox_rack_concept/conceptcable.html'
+
+
+@register_model_view(ConceptCable, 'add', detail=False)
+@register_model_view(ConceptCable, 'edit')
+class ConceptCableEditView(generic.ObjectEditView):
+    queryset = ConceptCable.objects.all()
+    form = forms.ConceptCableForm
+
+
+@register_model_view(ConceptCable, 'delete')
+class ConceptCableDeleteView(generic.ObjectDeleteView):
+    queryset = ConceptCable.objects.all()
+
+
+@register_model_view(ConceptCable, 'bulk_delete', path='delete', detail=False)
+class ConceptCableBulkDeleteView(generic.BulkDeleteView):
+    queryset = ConceptCable.objects.select_related('termination_a', 'termination_b')
+    filterset = filtersets.ConceptCableFilterSet
+    table = tables.ConceptCableTable

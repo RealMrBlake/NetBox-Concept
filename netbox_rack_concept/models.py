@@ -7,15 +7,22 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from dcim.choices import (
-    DeviceFaceChoices, RackAirflowChoices, RackDimensionUnitChoices, RackFormFactorChoices, RackWidthChoices,
+    CableTypeChoices, DeviceFaceChoices, LinkStatusChoices, RackAirflowChoices, RackDimensionUnitChoices,
+    RackFormFactorChoices, RackWidthChoices,
 )
 from netbox.models import NetBoxModel
+from utilities.fields import ColorField
 
-from .choices import LANE_COUNT, ConceptDeviceStatusChoices, ConceptStatusChoices, WidthFractionChoices
+from .choices import (
+    LANE_COUNT, ConceptComponentTypeChoices, ConceptDeviceStatusChoices, ConceptStatusChoices, WidthFractionChoices,
+)
 
 __all__ = (
+    'ConceptCable',
+    'ConceptComponent',
     'ConceptDevice',
     'ConceptDeployment',
+    'ConceptPortMapping',
     'RackConcept',
 )
 
@@ -459,3 +466,216 @@ class ConceptDeployment(models.Model):
 
     def __str__(self):
         return f'{self.concept} → {self.rack_name}'
+
+
+class ConceptComponent(NetBoxModel):
+    """
+    A pluggable point on a planned device - an interface, a front/rear port, a power
+    port/outlet, or a console port. One shared model covers every kind rather than
+    mirroring dcim's seven separate component models, since a blueprint only needs
+    enough detail to say what a cable plugs into, not full per-type validation.
+
+    Populated either by syncing a device's component templates (see components.py) or
+    added by hand, which is the only option for placeholder devices without a device
+    type.
+    """
+    device = models.ForeignKey(
+        to=ConceptDevice,
+        on_delete=models.CASCADE,
+        related_name='components'
+    )
+    component_type = models.CharField(
+        verbose_name=_('component type'),
+        max_length=50,
+        choices=ConceptComponentTypeChoices
+    )
+    name = models.CharField(
+        verbose_name=_('name'),
+        max_length=64
+    )
+    label = models.CharField(
+        max_length=64,
+        blank=True
+    )
+    port_type = models.CharField(
+        verbose_name=_('type'),
+        max_length=50,
+        blank=True,
+        help_text=_('Free text, e.g. "1000base-t" or "lc" - for reference only, not validated')
+    )
+    positions = models.PositiveSmallIntegerField(
+        verbose_name=_('positions'),
+        default=1,
+        validators=[MinValueValidator(1), MaxValueValidator(1024)],
+        help_text=_('Front/rear ports only')
+    )
+    color = ColorField(blank=True)
+    description = models.CharField(max_length=200, blank=True)
+
+    clone_fields = ('device', 'component_type', 'port_type', 'positions')
+
+    class Meta:
+        ordering = ('device', 'component_type', 'name')
+        constraints = (
+            models.UniqueConstraint(fields=('device', 'name'), name='nbrc_component_unique_device_name'),
+        )
+        verbose_name = _('concept component')
+        verbose_name_plural = _('concept components')
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse('plugins:netbox_rack_concept:conceptcomponent', args=[self.pk])
+
+    @property
+    def is_pass_through(self):
+        return self.component_type in ConceptComponentTypeChoices.PATCH_TYPES
+
+    @property
+    def cable(self):
+        return ConceptCable.objects.filter(
+            models.Q(termination_a=self) | models.Q(termination_b=self)
+        ).first()
+
+    @property
+    def is_connected(self):
+        return self.cable is not None
+
+    def get_paired_components(self):
+        """
+        For a front or rear port, the port(s) on the other side it passes through to -
+        real patch panel behaviour: a signal entering a front port continues out
+        whichever rear port (and position) it's mapped to, and vice versa.
+        Returns a list of (component, own_position, other_position) tuples.
+        """
+        if self.component_type == ConceptComponentTypeChoices.TYPE_FRONT_PORT:
+            return [
+                (mapping.rear_component, mapping.front_position, mapping.rear_position)
+                for mapping in self.front_mappings.select_related('rear_component')
+            ]
+        if self.component_type == ConceptComponentTypeChoices.TYPE_REAR_PORT:
+            return [
+                (mapping.front_component, mapping.rear_position, mapping.front_position)
+                for mapping in self.rear_mappings.select_related('front_component')
+            ]
+        return []
+
+    def clean(self):
+        super().clean()
+        if self.positions > 1 and not self.is_pass_through:
+            raise ValidationError({
+                'positions': _('Only front and rear ports can have more than one position.')
+            })
+
+
+class ConceptPortMapping(models.Model):
+    """
+    Maps a front port position to a rear port position, mirroring dcim's PortMapping.
+    Not a NetBoxModel: like its real-world counterpart, this is wiring metadata, not a
+    user-facing object with its own detail page.
+    """
+    front_component = models.ForeignKey(
+        to=ConceptComponent,
+        on_delete=models.CASCADE,
+        related_name='front_mappings',
+        limit_choices_to={'component_type': ConceptComponentTypeChoices.TYPE_FRONT_PORT}
+    )
+    rear_component = models.ForeignKey(
+        to=ConceptComponent,
+        on_delete=models.CASCADE,
+        related_name='rear_mappings',
+        limit_choices_to={'component_type': ConceptComponentTypeChoices.TYPE_REAR_PORT}
+    )
+    front_position = models.PositiveSmallIntegerField(default=1)
+    rear_position = models.PositiveSmallIntegerField(default=1)
+
+    class Meta:
+        constraints = (
+            models.UniqueConstraint(
+                fields=('front_component', 'front_position'), name='nbrc_portmapping_unique_front'
+            ),
+            models.UniqueConstraint(
+                fields=('rear_component', 'rear_position'), name='nbrc_portmapping_unique_rear'
+            ),
+        )
+
+    def __str__(self):
+        return f'{self.front_component}:{self.front_position} → {self.rear_component}:{self.rear_position}'
+
+    def clean(self):
+        super().clean()
+        if self.front_component_id and self.rear_component_id:
+            if self.front_component.device_id != self.rear_component.device_id:
+                raise ValidationError({
+                    'rear_component': _('Front and rear port must belong to the same device.')
+                })
+
+
+class ConceptCable(NetBoxModel):
+    """A planned connection between two components, on planned devices only."""
+    termination_a = models.ForeignKey(
+        to=ConceptComponent,
+        on_delete=models.CASCADE,
+        related_name='+'
+    )
+    termination_b = models.ForeignKey(
+        to=ConceptComponent,
+        on_delete=models.CASCADE,
+        related_name='+'
+    )
+    status = models.CharField(
+        max_length=50,
+        choices=LinkStatusChoices,
+        default=LinkStatusChoices.STATUS_CONNECTED
+    )
+    type = models.CharField(
+        verbose_name=_('type'),
+        max_length=50,
+        choices=CableTypeChoices,
+        blank=True
+    )
+    color = ColorField(blank=True)
+    label = models.CharField(max_length=100, blank=True)
+    description = models.CharField(max_length=200, blank=True)
+    comments = models.TextField(blank=True)
+
+    clone_fields = ('status', 'type', 'color')
+
+    class Meta:
+        ordering = ('pk',)
+        verbose_name = _('concept cable')
+        verbose_name_plural = _('concept cables')
+
+    def __str__(self):
+        return self.label or f'#{self.pk}'
+
+    def get_absolute_url(self):
+        return reverse('plugins:netbox_rack_concept:conceptcable', args=[self.pk])
+
+    def get_status_color(self):
+        return LinkStatusChoices.colors.get(self.status)
+
+    def clean(self):
+        super().clean()
+        if not (self.termination_a_id and self.termination_b_id):
+            return
+
+        if self.termination_a_id == self.termination_b_id:
+            raise ValidationError(_('A cable cannot connect a component to itself.'))
+
+        if self.termination_a.device.concept_id != self.termination_b.device.concept_id:
+            raise ValidationError(
+                _('Both ends of a cable must belong to devices in the same rack concept.')
+            )
+
+        for field_name, endpoint in (('termination_a', self.termination_a), ('termination_b', self.termination_b)):
+            conflict = ConceptCable.objects.exclude(pk=self.pk).filter(
+                models.Q(termination_a=endpoint) | models.Q(termination_b=endpoint)
+            ).first()
+            if conflict:
+                raise ValidationError({
+                    field_name: _('%(component)s is already connected (%(cable)s).') % {
+                        'component': endpoint, 'cable': conflict
+                    }
+                })

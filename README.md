@@ -32,8 +32,40 @@ Dazu:
   Teilbreiten-Feature von `netbox_utilities`.
 * **Mandant und Mandantengruppe** an Konzept und an jedem geplanten Gerät.
 * **Platzhalter ohne Gerätetyp** – reservierter Bauraum, nur mit Höhenangabe.
+* **Klick auf eine leere HE** öffnet direkt „Add planned device", vorausgefüllt mit
+  Position und Seite — genau wie bei einer echten Rack-Elevation. Den separaten
+  „Add planned device"-Knopf gibt es dafür nicht mehr.
+* **Verkabelung von Konzept-Geräten** – Interfaces, Front-/Rear-Ports, Power-Ports/
+  -Outlets und Console-Ports lassen sich mit „Sync components" aus dem Gerätetyp
+  übernehmen (inkl. Front-↔Rear-Zuordnung von Patchpanels, 1:1 wie beim echten
+  Gerätetyp) und über „Connect" mit einem Concept Cable verbinden. Platzhalter ohne
+  Gerätetyp bekommen ihre Komponenten per Hand über „Add component".
 * Vollständige REST-API, Filter, CSV-Import/-Export, Bulk-Edit, Changelog, Journal,
   Tags, Custom Fields und globale Suche — wie bei jedem Core-Objekt.
+
+## Verkabelung
+
+Konzept-Geräte lassen sich verkabeln, aber **nicht** über NetBox' echtes `dcim.Cable` —
+das kann nur echte `dcim`-Komponenten verbinden. Stattdessen bringt das Plugin ein
+eigenes, schlankes Modellpaar mit:
+
+* **ConceptComponent** — ein Interface, Front-/Rear-Port, Power-Port/-Outlet oder
+  Console-Port an einem geplanten Gerät. Über **„Sync components"** auf der
+  Geräte-Seite werden sie 1:1 aus den Component-Templates des Gerätetyps erzeugt
+  (Name, Label, Typ, Positionen) — wiederholbar, ohne Duplikate oder Datenverlust an
+  bereits verkabelten Komponenten. Ein Gerät ohne Gerätetyp (Platzhalter) hat keine
+  Templates zum Syncen; seine Komponenten legt man über **„Add component"** von Hand an.
+* **ConceptCable** — verbindet zwei `ConceptComponent`s. Beide Enden müssen zu Geräten
+  im selben Rack-Konzept gehören; eine Komponente kann nur in einem Kabel gleichzeitig
+  stecken. Erreichbar über **„Connect"** an jeder unverkabelten Komponente.
+
+**Patchpanels funktionieren genauso wie bei echten Geräten**, weil das Plugin exakt
+dieselbe Front-↔Rear-Zuordnung ausliest, die NetBox selbst am Gerätetyp pflegt (über
+`PortTemplateMapping`, dieselbe Tabelle, die auch echte `FrontPort`/`RearPort`-Objekte
+verknüpft). Das hängt also nicht an der Rollenbezeichnung „Patchpanel", sondern schlicht
+daran, ob der Gerätetyp Front-/Rear-Ports mit Zuordnung definiert — Kabel an der
+Vorderseite eines synchronisierten Patchpanel-Gerätetyps zeigen auf der Detailseite der
+Komponente sofort den passenden Rear-Port samt Position an.
 
 ## Zusammenspiel mit den anderen Plugins
 
@@ -172,6 +204,8 @@ Basis-Pfad: `/api/plugins/rack-concepts/`
 | `POST` | `concepts/{id}/deploy/` | Konzept ausrollen (`dry_run` möglich) |
 | `GET` | `concepts/{id}/elevation/` | Berechnete Elevation als JSON |
 | `GET/POST` | `devices/` | Geplante Geräte |
+| `GET/POST` | `components/` | Komponenten der geplanten Geräte |
+| `GET/POST` | `cables/` | Concept Cables |
 
 Beispiel — zehn Racks aus einem Konzept, erst als Trockenlauf:
 

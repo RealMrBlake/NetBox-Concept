@@ -22,6 +22,27 @@
     fill: var(--tblr-primary-lt, #d7e7fb);
 }
 
+.concept-elevation .unit-slot.free {
+    cursor: pointer;
+}
+
+.concept-elevation .unit-slot.free:hover {
+    fill: var(--tblr-primary-lt, #d7e7fb);
+}
+
+/* "+ Add device" hint, shown only while hovering an empty unit - same trick as
+   NetBox's own rack elevation. */
+.concept-elevation .add-device-hint {
+    font-size: 10px;
+    fill: var(--tblr-primary, #206bc4);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.concept-elevation a:hover .add-device-hint {
+    opacity: 1;
+}
+
 .concept-elevation .unit-label {
     font-size: 10px;
     fill: var(--tblr-secondary, #808f9c);

@@ -11,9 +11,11 @@ from tenancy.api.serializers import TenantGroupSerializer, TenantSerializer
 from tenancy.models import Tenant
 
 from ..choices import ConceptStatusChoices
-from ..models import ConceptDeployment, ConceptDevice, RackConcept
+from ..models import ConceptCable, ConceptComponent, ConceptDeployment, ConceptDevice, RackConcept
 
 __all__ = (
+    'ConceptCableSerializer',
+    'ConceptComponentSerializer',
     'ConceptDeploySerializer',
     'ConceptDeploymentSerializer',
     'ConceptDeviceSerializer',
@@ -79,6 +81,38 @@ class ConceptDeploymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConceptDeployment
         fields = ('id', 'rack', 'rack_name', 'device_count', 'user', 'created')
+
+
+class ConceptComponentSerializer(NetBoxModelSerializer):
+    url = serializers.HyperlinkedIdentityField(
+        view_name='plugins-api:netbox_rack_concept-api:conceptcomponent-detail'
+    )
+    device = ConceptDeviceSerializer(nested=True)
+    is_connected = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = ConceptComponent
+        fields = (
+            'id', 'url', 'display_url', 'display', 'device', 'component_type', 'name', 'label', 'port_type',
+            'positions', 'color', 'description', 'is_connected', 'tags', 'custom_fields', 'created', 'last_updated',
+        )
+        brief_fields = ('id', 'url', 'display', 'name', 'component_type', 'device')
+
+
+class ConceptCableSerializer(NetBoxModelSerializer):
+    url = serializers.HyperlinkedIdentityField(
+        view_name='plugins-api:netbox_rack_concept-api:conceptcable-detail'
+    )
+    termination_a = ConceptComponentSerializer(nested=True)
+    termination_b = ConceptComponentSerializer(nested=True)
+
+    class Meta:
+        model = ConceptCable
+        fields = (
+            'id', 'url', 'display_url', 'display', 'termination_a', 'termination_b', 'status', 'type', 'color',
+            'label', 'description', 'comments', 'tags', 'custom_fields', 'created', 'last_updated',
+        )
+        brief_fields = ('id', 'url', 'display', 'label', 'termination_a', 'termination_b')
 
 
 #

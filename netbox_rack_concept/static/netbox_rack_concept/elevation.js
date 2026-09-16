@@ -18,11 +18,20 @@
     function applyView(view) {
         const showImages = view !== 'labels-only';
         const showImageLabels = view === 'images-and-labels';
+        // "Images only" hides every plain label outright, not just the ones sitting
+        // under an image: a device without an image for this face has nothing to
+        // visually cover its label otherwise, which would leave text showing (e.g. on
+        // a rear face where only the front image is set) even though the user picked
+        // "images only".
+        const hidePlainLabels = view === 'images-only';
         container.querySelectorAll('image.device-image').forEach(function (el) {
             el.classList.toggle('hidden', !showImages);
         });
         container.querySelectorAll('.device-image-label').forEach(function (el) {
             el.classList.toggle('hidden', !showImageLabels);
+        });
+        container.querySelectorAll('.device-label').forEach(function (el) {
+            el.classList.toggle('hidden', hidePlainLabels);
         });
     }
 

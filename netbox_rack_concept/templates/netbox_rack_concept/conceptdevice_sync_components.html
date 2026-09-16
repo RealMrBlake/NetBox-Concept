@@ -1,0 +1,34 @@
+{% extends 'base/layout.html' %}
+{% load i18n %}
+
+{% block title %}{% blocktrans with device=object %}Sync components for {{ device }}{% endblocktrans %}{% endblock %}
+
+{% block content %}
+<form action="" method="post">
+  {% csrf_token %}
+  <div class="row">
+    <div class="col col-md-8 offset-md-2">
+      <div class="card">
+        <h2 class="card-header">{% trans "Sync components from device type" %}</h2>
+        <div class="card-body">
+          <p>
+            {% blocktrans with device=object device_type=object.device_type %}
+              Creates any interfaces, ports and power connections that {{ device_type }} defines but
+              {{ device }} doesn't have yet, matched by name. Existing components - and any cables already
+              attached to them - are left exactly as they are, so this is safe to run again later, e.g. after
+              adding a component by hand or changing the device type.
+            {% endblocktrans %}
+          </p>
+          <p class="text-muted">
+            {% trans "Front and rear ports are linked the same way they are on the device type, so a patch panel's pass-through mapping carries over automatically." %}
+          </p>
+        </div>
+        <div class="card-footer text-end">
+          <a href="{{ return_url }}" class="btn btn-outline-danger">{% trans "Cancel" %}</a>
+          <button type="submit" class="btn btn-primary">{% trans "Sync components" %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

@@ -44,6 +44,16 @@ device_buttons = [
     ),
 ]
 
+cable_buttons = [
+    PluginMenuButton(
+        link='plugins:netbox_rack_concept:conceptcable_add',
+        title=_('Add'),
+        icon_class='mdi mdi-plus-thick',
+        color=ButtonColorChoices.GREEN,
+        permissions=['netbox_rack_concept.add_conceptcable']
+    ),
+]
+
 menu = PluginMenu(
     label=_('Rack Concepts'),
     icon_class='mdi mdi-view-grid-plus-outline',
@@ -60,6 +70,19 @@ menu = PluginMenu(
                 link_text=_('Planned Devices'),
                 permissions=['netbox_rack_concept.view_conceptdevice'],
                 buttons=device_buttons
+            ),
+        )),
+        (_('Cabling'), (
+            PluginMenuItem(
+                link='plugins:netbox_rack_concept:conceptcomponent_list',
+                link_text=_('Components'),
+                permissions=['netbox_rack_concept.view_conceptcomponent'],
+            ),
+            PluginMenuItem(
+                link='plugins:netbox_rack_concept:conceptcable_list',
+                link_text=_('Cables'),
+                permissions=['netbox_rack_concept.view_conceptcable'],
+                buttons=cable_buttons
             ),
         )),
     )

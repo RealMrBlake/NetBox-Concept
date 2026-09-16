@@ -150,19 +150,11 @@
              data-starting-unit="{{ object.starting_unit }}"
              data-u-height="{{ object.u_height }}"
              data-desc-units="{{ object.desc_units|yesno:'true,false' }}">
-          {% include 'netbox_rack_concept/inc/elevation.html' with elevation=front_elevation %}
-          {% include 'netbox_rack_concept/inc/elevation.html' with elevation=rear_elevation %}
+          {% include 'netbox_rack_concept/inc/elevation.html' with elevation=front_elevation can_add_device=perms.netbox_rack_concept.add_conceptdevice %}
+          {% include 'netbox_rack_concept/inc/elevation.html' with elevation=rear_elevation can_add_device=perms.netbox_rack_concept.add_conceptdevice %}
         </div>
         <div id="concept-elevation-status" class="small text-muted mt-2"></div>
       </div>
-      {% if perms.netbox_rack_concept.add_conceptdevice %}
-        <div class="card-footer text-end">
-          <a href="{% url 'plugins:netbox_rack_concept:conceptdevice_add' %}?concept={{ object.pk }}&return_url={{ object.get_absolute_url }}"
-             class="btn btn-sm btn-primary">
-            <i class="mdi mdi-plus-thick"></i> {% trans "Add planned device" %}
-          </a>
-        </div>
-      {% endif %}
     </div>
 
     <div class="card">

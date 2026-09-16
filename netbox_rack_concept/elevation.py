@@ -38,10 +38,15 @@ def foreground_color(bg_color):
 class ElevationUnit:
     """One labelled rack unit row."""
 
-    def __init__(self, number, y):
+    def __init__(self, number, y, occupied=False):
         self.number = number
         self.y = y
         self.height = UNIT_HEIGHT
+        # Whether *anything* renders over this unit on this face - including a
+        # reduced-opacity "opposite" block for a full-depth device. A unit only counts
+        # as free (and thus click-to-add) when nothing at all sits on it, which folds
+        # back to plain occupied/free for full-width-only setups, same as core NetBox.
+        self.occupied = occupied
 
 
 class ElevationBlock:
@@ -110,11 +115,14 @@ class Elevation:
         self.legend_width = LEGEND_WIDTH
         self.rack_width = RACK_WIDTH
         self.rack_x = RACK_X
+        self.rack_right = RACK_X + RACK_WIDTH
         self.width = RACK_X + RACK_WIDTH + MARGIN
         self.height = concept.u_height * UNIT_HEIGHT + MARGIN * 2
 
-        self._build_units()
+        # Blocks first: unit occupancy (used to decide which units are click-to-add)
+        # depends on where they land.
         self._build_blocks(devices if devices is not None else concept.devices.all())
+        self._build_units()
 
     @property
     def face_label(self):
@@ -134,7 +142,11 @@ class Elevation:
     def _build_units(self):
         for number in self.concept.units:
             top = number if self.concept.desc_units else number + 1
-            self.units.append(ElevationUnit(number, self._y_for(Decimal(top))))
+            occupied = any(
+                block.device.unit_span and block.device.unit_span[0] <= number < block.device.unit_span[1]
+                for block in self.blocks
+            )
+            self.units.append(ElevationUnit(number, self._y_for(Decimal(top)), occupied))
 
     def _build_blocks(self, devices):
         for device in devices:

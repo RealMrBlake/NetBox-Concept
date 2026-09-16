@@ -12,13 +12,25 @@
        class="concept-elevation-svg" role="img"
        aria-label="{% blocktrans with face=elevation.face_label name=elevation.concept.name %}{{ face }} elevation of {{ name }}{% endblocktrans %}">
 
-    {# Unit rows and legend #}
+    {# Unit rows and legend. An empty unit becomes a click target for adding a device
+       here, exactly like a real rack's elevation. #}
     {% for unit in elevation.units %}
       <g class="unit">
-        <rect x="{{ elevation.rack_x }}" y="{{ unit.y }}"
-              width="{{ elevation.rack_width }}" height="{{ unit.height }}"
-              class="unit-slot"
-              data-unit="{{ unit.number }}"></rect>
+        {% if not unit.occupied and can_add_device %}
+          <a href="{% url 'plugins:netbox_rack_concept:conceptdevice_add' %}?concept={{ elevation.concept.pk }}&amp;position={{ unit.number }}&amp;face={{ elevation.face }}&amp;return_url={{ elevation.concept.get_absolute_url }}">
+            <rect x="{{ elevation.rack_x }}" y="{{ unit.y }}"
+                  width="{{ elevation.rack_width }}" height="{{ unit.height }}"
+                  class="unit-slot free"
+                  data-unit="{{ unit.number }}"></rect>
+            <text x="{{ elevation.rack_right|add:'-6' }}" y="{{ unit.y }}" dy="15"
+                  class="add-device-hint" text-anchor="end">+ {% trans "Add device" %}</text>
+          </a>
+        {% else %}
+          <rect x="{{ elevation.rack_x }}" y="{{ unit.y }}"
+                width="{{ elevation.rack_width }}" height="{{ unit.height }}"
+                class="unit-slot"
+                data-unit="{{ unit.number }}"></rect>
+        {% endif %}
         <text x="{{ elevation.rack_x }}" y="{{ unit.y }}" dx="-4" dy="15"
               class="unit-label" text-anchor="end">{{ unit.number }}</text>
       </g>

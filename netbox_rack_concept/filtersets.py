@@ -2,14 +2,17 @@ import django_filters
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
+from dcim.choices import CableTypeChoices, LinkStatusChoices
 from dcim.models import DeviceRole, DeviceType, Rack, RackType, Site
 from netbox.filtersets import NetBoxModelFilterSet
 from tenancy.models import Tenant, TenantGroup
 
-from .choices import ConceptDeviceStatusChoices, ConceptStatusChoices
-from .models import ConceptDevice, RackConcept
+from .choices import ConceptComponentTypeChoices, ConceptDeviceStatusChoices, ConceptStatusChoices
+from .models import ConceptCable, ConceptComponent, ConceptDevice, RackConcept
 
 __all__ = (
+    'ConceptCableFilterSet',
+    'ConceptComponentFilterSet',
     'ConceptDeviceFilterSet',
     'RackConceptFilterSet',
 )
@@ -115,3 +118,71 @@ class ConceptDeviceFilterSet(NetBoxModelFilterSet):
 
     def filter_racked(self, queryset, name, value):
         return queryset.filter(position__isnull=not value)
+
+
+class ConceptComponentFilterSet(NetBoxModelFilterSet):
+    device_id = django_filters.ModelMultipleChoiceFilter(
+        queryset=ConceptDevice.objects.all(),
+        label=_('Concept device (ID)')
+    )
+    concept_id = django_filters.ModelMultipleChoiceFilter(
+        field_name='device__concept',
+        queryset=RackConcept.objects.all(),
+        label=_('Rack concept (ID)')
+    )
+    component_type = django_filters.MultipleChoiceFilter(
+        choices=ConceptComponentTypeChoices
+    )
+    connected = django_filters.BooleanFilter(
+        method='filter_connected',
+        label=_('Has a cable attached')
+    )
+
+    class Meta:
+        model = ConceptComponent
+        fields = ('id', 'name', 'label', 'component_type', 'port_type', 'positions', 'description')
+
+    def search(self, queryset, name, value):
+        if not value.strip():
+            return queryset
+        return queryset.filter(
+            Q(name__icontains=value) |
+            Q(label__icontains=value) |
+            Q(description__icontains=value)
+        )
+
+    def filter_connected(self, queryset, name, value):
+        # A component is connected once it's referenced by a cable as either end.
+        connected = (
+            Q(pk__in=ConceptCable.objects.values_list('termination_a_id', flat=True)) |
+            Q(pk__in=ConceptCable.objects.values_list('termination_b_id', flat=True))
+        )
+        return queryset.filter(connected) if value else queryset.exclude(connected)
+
+
+class ConceptCableFilterSet(NetBoxModelFilterSet):
+    concept_id = django_filters.ModelMultipleChoiceFilter(
+        field_name='termination_a__device__concept',
+        queryset=RackConcept.objects.all(),
+        label=_('Rack concept (ID)')
+    )
+    status = django_filters.MultipleChoiceFilter(
+        choices=LinkStatusChoices
+    )
+    type = django_filters.MultipleChoiceFilter(
+        choices=CableTypeChoices
+    )
+
+    class Meta:
+        model = ConceptCable
+        fields = ('id', 'status', 'type', 'color', 'label', 'description')
+
+    def search(self, queryset, name, value):
+        if not value.strip():
+            return queryset
+        return queryset.filter(
+            Q(label__icontains=value) |
+            Q(description__icontains=value) |
+            Q(termination_a__name__icontains=value) |
+            Q(termination_b__name__icontains=value)
+        )

@@ -7,5 +7,7 @@ app_name = 'netbox_rack_concept-api'
 router = NetBoxRouter()
 router.register('concepts', views.RackConceptViewSet)
 router.register('devices', views.ConceptDeviceViewSet)
+router.register('components', views.ConceptComponentViewSet)
+router.register('cables', views.ConceptCableViewSet)
 
 urlpatterns = router.urls
