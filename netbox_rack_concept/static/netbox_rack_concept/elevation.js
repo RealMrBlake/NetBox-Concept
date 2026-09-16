@@ -76,8 +76,10 @@
     const statusEl = document.getElementById('concept-elevation-status');
 
     function csrfToken() {
-        const match = document.cookie.match(/(^|;)\s*csrftoken\s*=\s*([^;]+)/);
-        return match ? decodeURIComponent(match[2]) : '';
+        // NetBox sets CSRF_COOKIE_HTTPONLY, so the cookie itself is invisible to
+        // JavaScript - read the value from the hidden {% csrf_token %} input instead.
+        const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+        return input ? input.value : '';
     }
 
     function setStatus(message, isError) {
