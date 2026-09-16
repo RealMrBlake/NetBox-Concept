@@ -174,9 +174,7 @@
         </div>
       </div>
       <div class="card-body">
-        {# CSRF_COOKIE_HTTPONLY is on in NetBox, so the elevation.js reorder POST can't
-           read the csrftoken cookie via document.cookie - it reads this hidden input's
-           value instead, the standard Django way to CSRF-protect a plain fetch(). #}
+        {# CSRF_COOKIE_HTTPONLY is on in NetBox, so elevation.js reads the token from this hidden input instead of the (JS-invisible) cookie. #}
         {% csrf_token %}
         <div class="d-flex justify-content-around flex-wrap"
              id="concept-elevations"

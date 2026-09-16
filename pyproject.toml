@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "netbox-rack-concept"
-version = "0.1.0"
+version = "0.2.0"
 description = "Rack blueprints for NetBox: plan racks and their equipment without creating real racks or devices"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -28,4 +28,6 @@ netbox_rack_concept = [
     "templates/netbox_rack_concept/*.html",
     "templates/netbox_rack_concept/inc/*.html",
     "static/netbox_rack_concept/*",
+    "locale/*/LC_MESSAGES/*.po",
+    "locale/*/LC_MESSAGES/*.mo",
 ]

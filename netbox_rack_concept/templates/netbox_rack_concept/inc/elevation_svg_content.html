@@ -7,8 +7,7 @@
   a dot as the decimal separator whatever the UI language is.
 {% endcomment %}
 {% localize off %}
-{# Unit rows and legend. An empty unit becomes a click target for adding a device
-   here, exactly like a real rack's elevation. #}
+{# Unit rows and legend. An empty unit becomes a click target for adding a device here, exactly like a real rack's elevation. #}
 {% for unit in elevation.units %}
   <g class="unit">
     {% if not unit.occupied and can_add_device %}
@@ -58,8 +57,7 @@
         <clipPath id="concept-block-{{ elevation.face }}-{{ block.device.pk }}">
           <rect x="{{ block.x }}" y="{{ block.y }}" width="{{ block.width }}" height="{{ block.height }}" rx="2"></rect>
         </clipPath>
-        {# Absolute when we have a request (the export - a file that outlives the page
-           it came from needs a URL that still resolves once it's saved elsewhere). #}
+        {# Absolute when we have a request: an exported file that outlives the page it came from needs a URL that still resolves once saved elsewhere. #}
         <image href="{% if request %}{{ request.scheme }}://{{ request.get_host }}{% endif %}{{ block.image.url }}"
                x="{{ block.x }}" y="{{ block.y }}"
                width="{{ block.width }}" height="{{ block.height }}"

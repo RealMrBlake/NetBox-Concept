@@ -1,0 +1,928 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: netbox-rack-concept\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-16 00:00+0000\n"
+"PO-Revision-Date: 2026-09-16 00:00+0000\n"
+"Language-Team: German\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "%(component)s is already connected (%(cable)s)."
+msgstr "%(component)s ist bereits verbunden (%(cable)s)."
+
+msgid ""
+"%(device)s (U%(position)s) does not fit in the chosen size and was left out."
+msgstr ""
+"%(device)s (U%(position)s) passt nicht in die gewählte Größe und wurde "
+"ausgelassen."
+
+msgid ""
+"%(device)s from %(concept)s does not fit at its shifted position and was "
+"left out."
+msgstr ""
+"%(device)s aus %(concept)s passt an der verschobenen Position nicht und "
+"wurde ausgelassen."
+
+msgid ""
+"%(device)s from %(rack)s does not fit at its shifted position and was left "
+"out."
+msgstr ""
+"%(device)s aus %(rack)s passt an der verschobenen Position nicht und wurde "
+"ausgelassen."
+
+msgid "%(device)s has no device type to sync components from."
+msgstr ""
+"%(device)s hat keinen Gerätetyp, aus dem Komponenten übernommen werden "
+"könnten."
+
+msgid "%(device)s has no name and will be skipped."
+msgstr "%(device)s hat keinen Namen und wird übersprungen."
+
+msgid "%(device)s has no position and will not be created."
+msgstr "%(device)s hat keine Position und wird nicht angelegt."
+
+msgid ""
+"%(device)s has no role. NetBox requires one, so it will not be created."
+msgstr ""
+"%(device)s hat keine Rolle. NetBox verlangt eine, daher wird es nicht "
+"angelegt."
+
+msgid "%(device)s is marked optional but will be created."
+msgstr "%(device)s ist als optional markiert, wird aber angelegt."
+
+msgid ""
+"%(device)s is reserved space without a device type and will not be created."
+msgstr ""
+"%(device)s ist reservierter Bauraum ohne Gerätetyp und wird nicht angelegt."
+
+msgid "%(name)s (copy)"
+msgstr "%(name)s (Kopie)"
+
+msgid "%(rack)s (concept)"
+msgstr "%(rack)s (Konzept)"
+
+msgid "A cable cannot connect a component to itself."
+msgstr "Ein Kabel kann eine Komponente nicht mit sich selbst verbinden."
+
+msgid ""
+"A {height}U device at U{position} does not fit in a rack spanning "
+"U{low}-U{high}."
+msgstr ""
+"Ein {height}HE-Gerät auf U{position} passt nicht in ein Rack, das "
+"U{low}-U{high} umfasst."
+
+msgid "Add"
+msgstr "Hinzufügen"
+
+msgid "Add Components"
+msgstr "Komponenten hinzufügen"
+
+msgid "Add device"
+msgstr "Gerät hinzufügen"
+
+msgid "Add planned device"
+msgstr "Geplantes Gerät hinzufügen"
+
+msgid "Add {{ component_type_label }}"
+msgstr "{{ component_type_label }} hinzufügen"
+
+msgid "Airflow"
+msgstr "Luftstrom"
+
+msgid "Attributes"
+msgstr "Attribute"
+
+msgid "Both ends must belong to devices in this concept"
+msgstr "Beide Enden müssen zu Geräten in diesem Konzept gehören"
+
+msgid "Both ends of a cable must belong to devices in the same rack concept."
+msgstr ""
+"Beide Enden eines Kabels müssen zu Geräten im selben Rack-Konzept gehören."
+
+msgid "Bottom concept"
+msgstr "Unteres Konzept"
+
+msgid "Bottom rack"
+msgstr "Unteres Rack"
+
+msgid "Cable"
+msgstr "Kabel"
+
+msgid "Cables"
+msgstr "Kabel"
+
+msgid "Cabling"
+msgstr "Verkabelung"
+
+msgid "Cancel"
+msgstr "Abbrechen"
+
+msgid "Choose two different concepts to merge."
+msgstr "Zwei unterschiedliche Konzepte zum Zusammenführen auswählen."
+
+msgid "Choose two different racks to merge."
+msgstr "Zwei unterschiedliche Racks zum Zusammenführen auswählen."
+
+msgid "Clone concept"
+msgstr "Konzept klonen"
+
+msgid "Clone concept {{ name }}"
+msgstr "Konzept {{ name }} klonen"
+
+msgid "Clone {{ name }}"
+msgstr "{{ name }} klonen"
+
+msgid "Cloned %(source)s into %(clone)s."
+msgstr "%(source)s wurde nach %(clone)s geklont."
+
+msgid "Color"
+msgstr "Farbe"
+
+msgid "Combined size"
+msgstr "Kombinierte Größe"
+
+msgid "Component"
+msgstr "Komponente"
+
+msgid "Component A"
+msgstr "Komponente A"
+
+msgid "Component B"
+msgstr "Komponente B"
+
+msgid "Component type"
+msgstr "Komponententyp"
+
+msgid "Components"
+msgstr "Komponenten"
+
+msgid "Concept"
+msgstr "Konzept"
+
+msgid "Concept device"
+msgstr "Konzept-Gerät"
+
+msgid "Concept device (ID)"
+msgstr "Konzept-Gerät (ID)"
+
+msgid "Concept name"
+msgstr "Konzeptname"
+
+msgid "Concept size (optional)"
+msgstr "Konzeptgröße (optional)"
+
+msgid ""
+"Concepts copied from this rack. They are planning objects and do not affect "
+"this rack."
+msgstr ""
+"Von diesem Rack kopierte Konzepte. Es sind Planungsobjekte und wirken sich "
+"nicht auf dieses Rack aus."
+
+msgid "Connect"
+msgstr "Verbinden"
+
+msgid "Connected"
+msgstr "Verbunden"
+
+msgid "Connected to"
+msgstr "Verbunden mit"
+
+msgid "Connection"
+msgstr "Verbindung"
+
+msgid "Console Ports"
+msgstr "Konsolen-Ports"
+
+msgid "Console Server Ports"
+msgstr "Konsolenserver-Ports"
+
+msgid "Content"
+msgstr "Inhalt"
+
+msgid "Copied %(count)s cable(s)."
+msgstr "%(count)s Kabel übernommen."
+
+msgid "Copied from"
+msgstr "Kopiert von"
+
+msgid "Copy installed devices"
+msgstr "Eingebaute Geräte kopieren"
+
+msgid "Copy planned devices"
+msgstr "Geplante Geräte kopieren"
+
+msgid "Copy rack {{ rack }} to a concept"
+msgstr "Rack {{ rack }} in ein Konzept kopieren"
+
+msgid "Copy the geometry from a rack type instead of defining it here"
+msgstr "Geometrie von einem Rack-Typ übernehmen, statt sie hier festzulegen"
+
+msgid "Copy to concept"
+msgstr "Als Konzept kopieren"
+
+msgid "Copy {{ rack }} to a concept"
+msgstr "{{ rack }} in ein Konzept kopieren"
+
+msgid ""
+"Create a real device for every planned device that has a device type and a "
+"position"
+msgstr ""
+"Für jedes geplante Gerät mit Gerätetyp und Position ein echtes Gerät anlegen"
+
+msgid "Create clone"
+msgstr "Klon erstellen"
+
+msgid "Create concept"
+msgstr "Konzept erstellen"
+
+msgid "Create devices"
+msgstr "Geräte anlegen"
+
+msgid "Created %(count)s component(s)."
+msgstr "%(count)s Komponente(n) angelegt."
+
+msgid "Created %(merged)s by merging %(bottom)s and %(top)s."
+msgstr "%(merged)s durch Zusammenführen von %(bottom)s und %(top)s erstellt."
+
+msgid "Created %(racks)s rack(s) and %(devices)s device(s)."
+msgstr "%(racks)s Rack(s) und %(devices)s Gerät(e) angelegt."
+
+msgid "Created concept %(concept)s from %(bottom)s and %(top)s."
+msgstr "Konzept %(concept)s aus %(bottom)s und %(top)s erstellt."
+
+msgid "Created concept %(concept)s from rack %(rack)s."
+msgstr "Konzept %(concept)s aus Rack %(rack)s erstellt."
+
+msgid ""
+"Creates any interfaces, ports and power connections that {{ device_type }} "
+"defines but {{ device }} doesn't have yet, matched by name. Existing "
+"components - and any cables already attached to them - are left exactly as "
+"they are, so this is safe to run again later, e.g. after adding a component "
+"by hand or changing the device type."
+msgstr ""
+"Legt alle Interfaces, Ports und Stromanschlüsse an, die {{ device_type }} "
+"definiert, die {{ device }} aber noch nicht hat, abgeglichen über den Namen."
+" Vorhandene Komponenten - und bereits daran angeschlossene Kabel - bleiben "
+"unangetastet, daher lässt sich dies gefahrlos erneut ausführen, z.B. nach "
+"manuellem Hinzufügen einer Komponente oder einem Wechsel des Gerätetyps."
+
+msgid "Default location"
+msgstr "Standard-Standort"
+
+msgid "Default site"
+msgstr "Standard-Site"
+
+msgid "Default site (ID)"
+msgstr "Standard-Site (ID)"
+
+msgid "Deploy"
+msgstr "Ausrollen"
+
+msgid "Deploy concept {{ name }}"
+msgstr "Konzept {{ name }} ausrollen"
+
+msgid "Deploy to NetBox"
+msgstr "Nach NetBox ausrollen"
+
+msgid "Deploy {{ name }}"
+msgstr "{{ name }} ausrollen"
+
+msgid "Deployed"
+msgstr "Ausgerollt"
+
+msgid "Deployed by"
+msgstr "Ausgerollt von"
+
+msgid "Deployment defaults"
+msgstr "Vorgaben für das Ausrollen"
+
+msgid "Deployment failed, nothing was created."
+msgstr "Ausrollen fehlgeschlagen, nichts wurde angelegt."
+
+msgid "Deployments"
+msgstr "Ausrollungen"
+
+msgid "Descending units"
+msgstr "Absteigende Einheiten"
+
+msgid "Description"
+msgstr "Beschreibung"
+
+msgid "Device"
+msgstr "Gerät"
+
+msgid "Device %(id)s does not belong to this concept."
+msgstr "Gerät %(id)s gehört nicht zu diesem Konzept."
+
+msgid "Device A"
+msgstr "Gerät A"
+
+msgid "Device B"
+msgstr "Gerät B"
+
+msgid "Device name"
+msgstr "Gerätename"
+
+msgid "Device type"
+msgstr "Gerätetyp"
+
+msgid "Device type (ID)"
+msgstr "Gerätetyp (ID)"
+
+msgid "Devices"
+msgstr "Geräte"
+
+msgid "Dimensions"
+msgstr "Abmessungen"
+
+msgid "Drag devices to move them"
+msgstr "Geräte zum Verschieben ziehen"
+
+msgid "Draw.io (.drawio)"
+msgstr "Draw.io (.drawio)"
+
+msgid "Elevation"
+msgstr "Elevation"
+
+msgid "Export"
+msgstr "Export"
+
+msgid "Face"
+msgstr "Seite"
+
+msgid "First sequence number"
+msgstr "Erste laufende Nummer"
+
+msgid "Form factor"
+msgstr "Formfaktor"
+
+msgid "Free text shown in the elevation instead of the name"
+msgstr "Freitext, der statt des Namens in der Elevation angezeigt wird"
+
+msgid "Free text, e.g. \"1000base-t\" or \"lc\" - for reference only, not validated"
+msgstr ""
+"Freitext, z.B. \"1000base-t\" oder \"lc\" - nur zur Information, wird nicht "
+"geprüft"
+
+msgid "Front"
+msgstr "Vorderseite"
+
+msgid "Front Ports"
+msgstr "Front-Ports"
+
+msgid "Front and rear port must belong to the same device."
+msgstr "Front- und Rear-Port müssen zum selben Gerät gehören."
+
+msgid ""
+"Front and rear ports are linked the same way they are on the device type, so"
+" a patch panel's pass-through mapping carries over automatically."
+msgstr ""
+"Front- und Rear-Ports werden genauso verknüpft wie am Gerätetyp, sodass die "
+"Durchführungs-Zuordnung eines Patchpanels automatisch übernommen wird."
+
+msgid "Front/rear ports only"
+msgstr "Nur Front-/Rear-Ports"
+
+msgid "Full depth"
+msgstr "Volle Tiefe"
+
+msgid "Geometry"
+msgstr "Geometrie"
+
+msgid "Hardware"
+msgstr "Hardware"
+
+msgid "Has a cable attached"
+msgstr "Hat ein Kabel angeschlossen"
+
+msgid "Has a position assigned"
+msgstr "Hat eine Position zugewiesen"
+
+msgid "Height"
+msgstr "Höhe"
+
+msgid "Height (U)"
+msgstr "Höhe (HE)"
+
+msgid "Horizontal position"
+msgstr "Horizontale Position"
+
+msgid "Horizontal share of the rack unit, as used by netbox_utilities"
+msgstr ""
+"Horizontaler Anteil der Rack-Einheit, wie von netbox_utilities verwendet"
+
+msgid "ID"
+msgstr "ID"
+
+msgid "Images and labels"
+msgstr "Bilder und Beschriftungen"
+
+msgid "Images only"
+msgstr "Nur Bilder"
+
+msgid "Import"
+msgstr "Import"
+
+msgid "Interfaces"
+msgstr "Interfaces"
+
+msgid "Invalid name pattern: {error}"
+msgstr "Ungültiges Namensschema: {error}"
+
+msgid "Invalid position %(position)r."
+msgstr "Ungültige Position %(position)r."
+
+msgid "Its devices are shifted up by the bottom concept's height"
+msgstr ""
+"Seine Geräte werden um die Höhe des unteren Konzepts nach oben verschoben"
+
+msgid "Its devices are shifted up by the bottom rack's height"
+msgstr ""
+"Seine Geräte werden um die Höhe des unteren Racks nach oben verschoben"
+
+msgid "Keep device names"
+msgstr "Gerätenamen beibehalten"
+
+msgid "Keeps its planned positions unchanged"
+msgstr "Behält seine geplanten Positionen unverändert bei"
+
+msgid "Label"
+msgstr "Label"
+
+msgid "Labels only"
+msgstr "Nur Beschriftungen"
+
+msgid "Leave empty to reserve space without committing to a model"
+msgstr ""
+"Leer lassen, um Bauraum zu reservieren, ohne sich auf ein Modell festzulegen"
+
+msgid "Leave empty to use the sum of both heights"
+msgstr "Leer lassen, um die Summe beider Höhen zu verwenden"
+
+msgid "Link"
+msgstr "Link"
+
+msgid "Location"
+msgstr "Standort"
+
+msgid "Lowest unit occupied by the device. Empty means unracked."
+msgstr "Niedrigste vom Gerät belegte Einheit. Leer bedeutet nicht eingebaut."
+
+msgid "Malformed request body."
+msgstr "Fehlerhafter Anfrage-Body."
+
+msgid "Manufacturer"
+msgstr "Hersteller"
+
+msgid "Mapped %(count)s front/rear port pair(s)."
+msgstr "%(count)s Front-/Rear-Port-Paar(e) zugeordnet."
+
+msgid "Merge"
+msgstr "Zusammenführen"
+
+msgid "Merge Rack Concepts"
+msgstr "Rack-Konzepte zusammenführen"
+
+msgid "Merge Racks into a Concept"
+msgstr "Racks zu einem Konzept zusammenführen"
+
+msgid "Merge into concept"
+msgstr "Zu Konzept zusammenführen"
+
+msgid "Merge two concepts into one"
+msgstr "Zwei Konzepte zu einem zusammenführen"
+
+msgid "Merge two racks into one concept"
+msgstr "Zwei Racks zu einem Konzept zusammenführen"
+
+msgid "Merge with another"
+msgstr "Mit anderem zusammenführen"
+
+msgid "Mounting depth"
+msgstr "Einbautiefe"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "New concept name"
+msgstr "Neuer Konzeptname"
+
+msgid ""
+"No mapping to a port on the other side. Sync the device's components again "
+"if this looks wrong."
+msgstr ""
+"Keine Zuordnung zu einem Port auf der anderen Seite. Komponenten des Geräts "
+"erneut synchronisieren, falls das falsch aussieht."
+
+msgid "No new components to create; everything is already in sync."
+msgstr "Keine neuen Komponenten anzulegen; alles ist bereits synchron."
+
+msgid "Not connected"
+msgstr "Nicht verbunden"
+
+msgid "Not connected."
+msgstr "Nicht verbunden."
+
+msgid "Not racked"
+msgstr "Nicht eingebaut"
+
+msgid ""
+"Nothing in the rack is modified: the concept is a separate object that does "
+"not appear in the rack or device lists."
+msgstr ""
+"Am Rack wird nichts verändert: Das Konzept ist ein eigenständiges Objekt, "
+"das nicht in der Rack- oder Geräteliste erscheint."
+
+msgid "Number of racks"
+msgstr "Anzahl Racks"
+
+msgid "Only front and rear ports can have more than one position."
+msgstr "Nur Front- und Rear-Ports können mehr als eine Position haben."
+
+msgid "Optional. Supports the placeholder {n} when deploying multiple racks."
+msgstr ""
+"Optional. Unterstützt den Platzhalter {n} beim Ausrollen mehrerer Racks."
+
+msgid "Overlaps with {device} at U{position}."
+msgstr "Überschneidet sich mit {device} auf U{position}."
+
+msgid "Overrides"
+msgstr "Überschreibungen"
+
+msgid "Overrides the depth of the device type"
+msgstr "Überschreibt die Tiefe des Gerätetyps"
+
+msgid "Overrides the height of the device type"
+msgstr "Überschreibt die Höhe des Gerätetyps"
+
+msgid "Overrides the tenant of the concept"
+msgstr "Überschreibt den Mandanten des Konzepts"
+
+msgid "Pass-through mapping"
+msgstr "Durchführungs-Zuordnung"
+
+msgid "Placement"
+msgstr "Platzierung"
+
+msgid "Planned Device"
+msgstr "Geplantes Gerät"
+
+msgid "Planned Devices"
+msgstr "Geplante Geräte"
+
+msgid "Planned device"
+msgstr "Geplantes Gerät"
+
+msgid "Planned devices"
+msgstr "Geplante Geräte"
+
+msgid "Planning"
+msgstr "Planung"
+
+msgid "Platform"
+msgstr "Plattform"
+
+msgid "Position"
+msgstr "Position"
+
+msgid "Position (U)"
+msgstr "Position (HE)"
+
+msgid "Position must be a multiple of 0.5U."
+msgstr "Die Position muss ein Vielfaches von 0,5 HE sein."
+
+msgid "Positions"
+msgstr "Positionen"
+
+msgid "Power Outlets"
+msgstr "Steckdosen"
+
+msgid "Power Ports"
+msgstr "Stromanschlüsse"
+
+msgid "Pre-selected when deploying this concept"
+msgstr "Beim Ausrollen dieses Konzepts vorausgewählt"
+
+msgid "Rack"
+msgstr "Rack"
+
+msgid "Rack Concept"
+msgstr "Rack-Konzept"
+
+msgid "Rack Concepts"
+msgstr "Rack-Konzepte"
+
+msgid "Rack concept"
+msgstr "Rack-Konzept"
+
+msgid "Rack concept (ID)"
+msgstr "Rack-Konzept (ID)"
+
+msgid "Rack concept (name)"
+msgstr "Rack-Konzept (Name)"
+
+msgid "Rack name"
+msgstr "Rack-Name"
+
+msgid "Rack role"
+msgstr "Rack-Rolle"
+
+msgid "Rack type"
+msgstr "Rack-Typ"
+
+msgid "Rack type (ID)"
+msgstr "Rack-Typ (ID)"
+
+msgid "Racks"
+msgstr "Racks"
+
+msgid "Rear"
+msgstr "Rückseite"
+
+msgid "Rear Ports"
+msgstr "Rear-Ports"
+
+msgid "Reserved"
+msgstr "Reserviert"
+
+msgid "Role"
+msgstr "Rolle"
+
+msgid "Role (ID)"
+msgstr "Rolle (ID)"
+
+msgid "Same as rack"
+msgstr "Wie das Rack"
+
+msgid "Scope"
+msgstr "Geltungsbereich"
+
+msgid ""
+"Select two racks below, then click this to combine them into one concept"
+msgstr ""
+"Zwei Racks unten auswählen und dann hierauf klicken, um sie zu einem Konzept"
+" zu kombinieren"
+
+msgid "Serial"
+msgstr "Seriennummer"
+
+msgid "Side A"
+msgstr "Seite A"
+
+msgid "Side B"
+msgstr "Seite B"
+
+msgid "Site"
+msgstr "Site"
+
+msgid "Skip devices without a name"
+msgstr "Geräte ohne Namen überspringen"
+
+msgid "Slot index from the left, starting at 0"
+msgstr "Slot-Index von links, beginnend bei 0"
+
+msgid "Snapshot every device currently mounted in the rack"
+msgstr "Alle aktuell im Rack eingebauten Geräte übernehmen"
+
+msgid ""
+"Snapshots both racks' devices into one new blueprint - the top rack's "
+"devices shifted up by the bottom rack's height. Neither rack is modified."
+msgstr ""
+"Übernimmt die Geräte beider Racks in eine neue Blaupause - die Geräte des "
+"oberen Racks werden um die Höhe des unteren Racks nach oben verschoben. "
+"Keines der Racks wird verändert."
+
+msgid "Source rack (ID)"
+msgstr "Quell-Rack (ID)"
+
+msgid "Sources"
+msgstr "Quellen"
+
+msgid "Space utilization"
+msgstr "Platzauslastung"
+
+msgid "Specify a device type or an explicit height."
+msgstr "Einen Gerätetyp oder eine explizite Höhe angeben."
+
+msgid ""
+"Stacks the bottom concept's devices unchanged and shifts the top concept's "
+"devices up by the bottom concept's height, into one new, taller blueprint. "
+"Neither source concept is modified."
+msgstr ""
+"Stapelt die Geräte des unteren Konzepts unverändert und verschiebt die "
+"Geräte des oberen Konzepts um die Höhe des unteren Konzepts nach oben, in "
+"eine neue, höhere Blaupause. Keines der Quellkonzepte wird verändert."
+
+msgid "Starting unit"
+msgstr "Starteinheit"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Sync components"
+msgstr "Komponenten synchronisieren"
+
+msgid "Sync components for {{ device }}"
+msgstr "Komponenten für {{ device }} synchronisieren"
+
+msgid "Sync components from device type"
+msgstr "Komponenten aus Gerätetyp synchronisieren"
+
+msgid "Tenancy"
+msgstr "Mandantenzuordnung"
+
+msgid "Tenant"
+msgstr "Mandant"
+
+msgid "Tenant (ID)"
+msgstr "Mandant (ID)"
+
+msgid "Tenant (slug)"
+msgstr "Mandant (Slug)"
+
+msgid "Tenant group"
+msgstr "Mandantengruppe"
+
+msgid "Tenant group (ID)"
+msgstr "Mandantengruppe (ID)"
+
+msgid "Tenant {tenant} does not belong to group {group}."
+msgstr "Mandant {tenant} gehört nicht zu Gruppe {group}."
+
+msgid ""
+"The pattern produces duplicate names. Include {n} when creating more than "
+"one rack."
+msgstr ""
+"Das Schema erzeugt doppelte Namen. {n} einbauen, wenn mehr als ein Rack "
+"erstellt wird."
+
+msgid "The rack this concept was copied from"
+msgstr "Das Rack, von dem dieses Konzept kopiert wurde"
+
+msgid "These racks already exist at {site}: {names}"
+msgstr "Diese Racks existieren bereits bei {site}: {names}"
+
+msgid "This concept has not been deployed yet."
+msgstr "Dieses Konzept wurde noch nicht ausgerollt."
+
+msgid ""
+"This creates real racks and devices in NetBox. The concept itself is left "
+"untouched and stays reusable."
+msgstr ""
+"Dadurch werden echte Racks und Geräte in NetBox angelegt. Das Konzept selbst"
+" bleibt unangetastet und wiederverwendbar."
+
+msgid "Top concept"
+msgstr "Oberes Konzept"
+
+msgid "Top rack"
+msgstr "Oberes Rack"
+
+msgid "Type"
+msgstr "Typ"
+
+msgid "Unchecked, only the device type and position are copied"
+msgstr "Deaktiviert werden nur Gerätetyp und Position kopiert"
+
+msgid "Unchecked, unnamed planned devices are created as unnamed devices"
+msgstr ""
+"Deaktiviert werden unbenannte geplante Geräte als unbenannte Geräte angelegt"
+
+msgid "Use {n} for the sequence number, e.g. \"DC1-R{n}\". Zero-pad with {n:02d}."
+msgstr ""
+"{n} für die laufende Nummer verwenden, z.B. \"DC1-R{n}\". Mit Nullen "
+"auffüllen via {n:02d}."
+
+msgid "Utilization"
+msgstr "Auslastung"
+
+msgid "Width"
+msgstr "Breite"
+
+msgid "Width of the combined rack"
+msgstr "Breite des kombinierten Racks"
+
+msgid "Will be skipped"
+msgstr "Wird übersprungen"
+
+msgid "With a width of 1/{fraction} the position must be between 0 and {max}."
+msgstr ""
+"Bei einer Breite von 1/{fraction} muss die Position zwischen 0 und {max} "
+"liegen."
+
+msgid "You do not have permission to create racks."
+msgstr "Du hast keine Berechtigung, Racks zu erstellen."
+
+msgid "component type"
+msgstr "Komponententyp"
+
+msgid "concept cable"
+msgstr "Concept Cable"
+
+msgid "concept cables"
+msgstr "Concept Cables"
+
+msgid "concept component"
+msgstr "Concept Component"
+
+msgid "concept components"
+msgstr "Concept Components"
+
+msgid "concept deployment"
+msgstr "Konzept-Ausrollung"
+
+msgid "concept deployments"
+msgstr "Konzept-Ausrollungen"
+
+msgid "concept device"
+msgstr "Konzept-Gerät"
+
+msgid "concept devices"
+msgstr "Konzept-Geräte"
+
+msgid "descending units"
+msgstr "absteigende Einheiten"
+
+msgid "form factor"
+msgstr "Formfaktor"
+
+msgid "height (U)"
+msgstr "Höhe (HE)"
+
+msgid "horizontal position"
+msgstr "horizontale Position"
+
+msgid "name"
+msgstr "Name"
+
+msgid "position"
+msgstr "Position"
+
+msgid "position (U)"
+msgstr "Position (HE)"
+
+msgid "positions"
+msgstr "Positionen"
+
+msgid "rack concept"
+msgstr "Rack-Konzept"
+
+msgid "rack concepts"
+msgstr "Rack-Konzepte"
+
+msgid "rack face"
+msgstr "Rack-Seite"
+
+msgid "rear"
+msgstr "Rückseite"
+
+msgid "starting unit"
+msgstr "Starteinheit"
+
+msgid "status"
+msgstr "Status"
+
+msgid "type"
+msgstr "Typ"
+
+msgid "width"
+msgstr "Breite"
+
+msgid "{{ face }} elevation of {{ name }}"
+msgstr "{{ face }}-Elevation von {{ name }}"
+
+msgid ""
+"The original keeps its {{ counter }} planned device. The clone is "
+"independent from this point on."
+msgid_plural ""
+"The original keeps its {{ counter }} planned devices. The clone is "
+"independent from this point on."
+msgstr[0] ""
+"Das Original behält sein {{ counter }} geplantes Gerät. Der Klon ist ab hier"
+" unabhängig."
+msgstr[1] ""
+"Das Original behält seine {{ counter }} geplanten Geräte. Der Klon ist ab "
+"hier unabhängig."
+
+msgid ""
+"The rack contains {{ counter }} racked device, which can be snapshotted into"
+" the concept."
+msgid_plural ""
+"The rack contains {{ counter }} racked devices, which can be snapshotted "
+"into the concept."
+msgstr[0] ""
+"Das Rack enthält {{ counter }} eingebautes Gerät, das in das Konzept "
+"übernommen werden kann."
+msgstr[1] ""
+"Das Rack enthält {{ counter }} eingebaute Geräte, die in das Konzept "
+"übernommen werden können."
+
+msgid "{{ counter }} planned device will be created per rack."
+msgid_plural "{{ counter }} planned devices will be created per rack."
+msgstr[0] "Pro Rack wird {{ counter }} geplantes Gerät angelegt."
+msgstr[1] "Pro Rack werden {{ counter }} geplante Geräte angelegt."

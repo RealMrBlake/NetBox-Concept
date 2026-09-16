@@ -268,6 +268,13 @@ Kabel, Interfaces jenseits der Device-Type-Templates, IP-Adressen, Seriennummern
 Asset-Tags. Geplante Geräte ohne Rolle, ohne Gerätetyp oder ohne Position werden
 übersprungen — welche das sind, zeigt die Bestätigungsseite vor dem Ausrollen an.
 
+## Sprache
+
+Das Plugin ist auf Englisch (Quelltext) und Deutsch übersetzt. Beide Sprachen sind in
+NetBox bereits als Auswahl hinterlegt; die Anzeigesprache stellt man wie gewohnt über
+das Benutzerprofil (Preferences → Language) um — keine zusätzliche Konfiguration nötig.
+Die Übersetzung liegt unter `netbox_rack_concept/locale/de/LC_MESSAGES/`.
+
 ## Berechtigungen
 
 Es gelten die normalen NetBox-Objektberechtigungen:
