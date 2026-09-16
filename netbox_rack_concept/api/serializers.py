@@ -4,8 +4,10 @@ from dcim.api.serializers import (
     DeviceRoleSerializer, DeviceTypeSerializer, LocationSerializer, PlatformSerializer, RackRoleSerializer,
     RackSerializer, RackTypeSerializer, SiteSerializer,
 )
+from dcim.models import Location, Rack, Site
 from netbox.api.serializers import NetBoxModelSerializer
 from tenancy.api.serializers import TenantGroupSerializer, TenantSerializer
+from tenancy.models import Tenant
 
 from ..choices import ConceptStatusChoices
 from ..models import ConceptDeployment, ConceptDevice, RackConcept
@@ -84,33 +86,21 @@ class ConceptDeploymentSerializer(serializers.ModelSerializer):
 
 class RackCopySerializer(serializers.Serializer):
     """POST body for copying a real rack into a new concept."""
-    rack = serializers.PrimaryKeyRelatedField(queryset=None)
+    rack = serializers.PrimaryKeyRelatedField(queryset=Rack.objects.all())
     name = serializers.CharField(max_length=100)
     status = serializers.ChoiceField(choices=ConceptStatusChoices, default=ConceptStatusChoices.STATUS_DRAFT)
-    tenant = serializers.PrimaryKeyRelatedField(queryset=None, required=False, allow_null=True)
+    tenant = serializers.PrimaryKeyRelatedField(queryset=Tenant.objects.all(), required=False, allow_null=True)
     description = serializers.CharField(max_length=200, required=False, allow_blank=True, default='')
     include_devices = serializers.BooleanField(default=True)
     include_device_names = serializers.BooleanField(default=True)
-
-    def __init__(self, *args, **kwargs):
-        from dcim.models import Rack
-        from tenancy.models import Tenant
-        super().__init__(*args, **kwargs)
-        self.fields['rack'].queryset = Rack.objects.all()
-        self.fields['tenant'].queryset = Tenant.objects.all()
 
 
 class RackConceptCloneSerializer(serializers.Serializer):
     """POST body for duplicating a concept."""
     name = serializers.CharField(max_length=100)
     status = serializers.ChoiceField(choices=ConceptStatusChoices, default=ConceptStatusChoices.STATUS_DRAFT)
-    tenant = serializers.PrimaryKeyRelatedField(queryset=None, required=False, allow_null=True)
+    tenant = serializers.PrimaryKeyRelatedField(queryset=Tenant.objects.all(), required=False, allow_null=True)
     include_devices = serializers.BooleanField(default=True)
-
-    def __init__(self, *args, **kwargs):
-        from tenancy.models import Tenant
-        super().__init__(*args, **kwargs)
-        self.fields['tenant'].queryset = Tenant.objects.all()
 
 
 class ConceptDeploySerializer(serializers.Serializer):
@@ -118,9 +108,9 @@ class ConceptDeploySerializer(serializers.Serializer):
     name_pattern = serializers.CharField(max_length=100)
     count = serializers.IntegerField(min_value=1, max_value=100, default=1)
     start_index = serializers.IntegerField(default=1)
-    site = serializers.PrimaryKeyRelatedField(queryset=None)
-    location = serializers.PrimaryKeyRelatedField(queryset=None, required=False, allow_null=True)
-    tenant = serializers.PrimaryKeyRelatedField(queryset=None, required=False, allow_null=True)
+    site = serializers.PrimaryKeyRelatedField(queryset=Site.objects.all())
+    location = serializers.PrimaryKeyRelatedField(queryset=Location.objects.all(), required=False, allow_null=True)
+    tenant = serializers.PrimaryKeyRelatedField(queryset=Tenant.objects.all(), required=False, allow_null=True)
     create_devices = serializers.BooleanField(default=True)
     device_name_pattern = serializers.CharField(max_length=100, required=False, allow_blank=True, default='')
     skip_unnamed_devices = serializers.BooleanField(default=True)
@@ -129,16 +119,7 @@ class ConceptDeploySerializer(serializers.Serializer):
         help_text='Return the planned rack names and warnings without creating anything'
     )
 
-    def __init__(self, *args, **kwargs):
-        from dcim.models import Location, Site
-        from tenancy.models import Tenant
-        super().__init__(*args, **kwargs)
-        self.fields['site'].queryset = Site.objects.all()
-        self.fields['location'].queryset = Location.objects.all()
-        self.fields['tenant'].queryset = Tenant.objects.all()
-
     def validate(self, attrs):
-        from dcim.models import Rack
         try:
             names = [
                 attrs['name_pattern'].format(n=i)
