@@ -120,6 +120,31 @@
         return el ? el.closest('.concept-elevation') : null;
     }
 
+    /* A free-floating copy of the device block, fixed to <body> and tracking the
+       pointer - not scoped to either SVG, so it stays visible while crossing from one
+       panel to the other. */
+    function createGhost(block, rectEl, clientX, clientY) {
+        const screenRect = rectEl.getBoundingClientRect();
+        const label = block.querySelector('.device-label');
+
+        const ghost = document.createElement('div');
+        ghost.className = 'concept-drag-ghost';
+        ghost.style.width = screenRect.width + 'px';
+        ghost.style.height = screenRect.height + 'px';
+        ghost.style.backgroundColor = rectEl.getAttribute('fill') || '#c0c0c0';
+        ghost.textContent = label ? label.textContent.trim() : '';
+        ghost.dataset.offsetX = clientX - screenRect.left;
+        ghost.dataset.offsetY = clientY - screenRect.top;
+        document.body.appendChild(ghost);
+        moveGhost(ghost, clientX, clientY);
+        return ghost;
+    }
+
+    function moveGhost(ghost, clientX, clientY) {
+        ghost.style.left = (clientX - ghost.dataset.offsetX) + 'px';
+        ghost.style.top = (clientY - ghost.dataset.offsetY) + 'px';
+    }
+
     container.querySelectorAll('.concept-elevation').forEach(function (panel) {
         const svg = panel.querySelector('svg');
         const geo = geometry(svg);
@@ -154,6 +179,13 @@
                 block.style.pointerEvents = 'none';
                 block.setPointerCapture(event.pointerId);
 
+                // A device dragged toward the other panel is still, structurally,
+                // content of its own source <svg> - it would render underneath the
+                // other panel's own markup once it overlapped it, effectively
+                // vanishing. A free-floating HTML ghost fixed to <body> sidesteps that
+                // entirely: it's not inside either SVG, so it stays visible over both.
+                const ghost = createGhost(block, rect, event.clientX, event.clientY);
+
                 function onMove(moveEvent) {
                     const now = svgPoint(svg, moveEvent);
                     dx = now.x - start.x;
@@ -161,8 +193,7 @@
                     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
                         moved = true;
                     }
-                    const snappedY = Math.round(dy / geo.unitHeight) * geo.unitHeight;
-                    block.setAttribute('transform', 'translate(' + dx + ' ' + snappedY + ')');
+                    moveGhost(ghost, moveEvent.clientX, moveEvent.clientY);
                 }
 
                 function onUp(upEvent) {
@@ -171,10 +202,10 @@
                     block.removeEventListener('pointercancel', onUp);
                     block.classList.remove('dragging');
                     block.style.pointerEvents = '';
+                    ghost.remove();
 
                     if (!moved) {
                         // Treat it as a click: follow the device link.
-                        block.removeAttribute('transform');
                         const link = block.querySelector('a');
                         if (link) window.location = link.getAttribute('href');
                         return;
@@ -245,12 +276,10 @@
                 if (result.ok) {
                     window.location.reload();
                 } else {
-                    block.removeAttribute('transform');
                     setStatus(result.body.error || 'The move was rejected.', true);
                 }
             })
             .catch(function () {
-                block.removeAttribute('transform');
                 setStatus('The move could not be saved.', true);
             });
     }

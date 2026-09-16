@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.2.3
+
+- Fix: dragging a device from front to rear (or back) made it invisible mid-drag - it
+  stayed structurally inside its own source `<svg>`, so it rendered underneath the
+  other panel once it overlapped it instead of over it. Replaced the in-SVG transform
+  with a free-floating HTML "ghost" fixed to `<body>` that tracks the pointer; the
+  original block just dims in place while dragging, exactly like before.
+- Fix: the rear elevation only ever showed a device type's `rear_image`, leaving
+  shallow devices without one (e.g. PDUs) blank on the rear view even when a perfectly
+  usable `front_image` exists. Full-depth devices are unaffected (their rear view still
+  only shows their own rear image, or nothing - showing the front picture there would
+  be wrong); only non-full-depth devices now fall back to the front image on the rear
+  view.
+- Shorten the drag-hint badge text above the elevation (the German translation in
+  particular had gotten too long for the badge).
+
 ## 0.2.2
 
 - Drag-and-drop now supports dragging a device from the front elevation onto the rear

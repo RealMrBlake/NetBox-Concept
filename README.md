@@ -27,9 +27,12 @@ Dazu:
   ändert nichts.
 * **Geräte mit Bild und Text** – ist am Gerätetyp ein Front-/Rear-Bild hinterlegt, wird
   es im Elevation-Block angezeigt; darüber liegt der Gerätename als weiße, schwarz
-  konturierte Schrift (kein dunkler Balken). Ein Dropdown über der Elevation schaltet
-  zwischen „Images and labels", „Images only" und „Labels only" um — genau wie bei
-  echten Racks in NetBox, inklusive Merken der Wahl im Browser.
+  konturierte Schrift (kein dunkler Balken). Auf der Rear-Seite zeigt ein **volltiefes**
+  Gerät nur sein eigenes Rear-Bild (oder gar keins); ein **nicht volltiefes** Gerät ohne
+  eigenes Rear-Bild (z.B. eine Steckdosenleiste) zeigt dort stattdessen sein Front-Bild.
+  Ein Dropdown über der Elevation schaltet zwischen „Images and labels", „Images only"
+  und „Labels only" um — genau wie bei echten Racks in NetBox, inklusive Merken der
+  Wahl im Browser.
 * **Teilbreiten** (1/1, 1/2, 1/3, 1/4 plus horizontale Slot-Position), passend zum
   Teilbreiten-Feature von `netbox_utilities`.
 * **Mandant und Mandantengruppe** an Konzept und an jedem geplanten Gerät.

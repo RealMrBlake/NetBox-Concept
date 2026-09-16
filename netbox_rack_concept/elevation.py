@@ -95,12 +95,22 @@ class ElevationBlock:
         The device type's image for the face this block is drawn on, i.e. what's
         physically visible from that side of the rack - not the device's own mounting
         face, which only matters for half-depth devices occupying one face at a time.
+
+        A full-depth device genuinely has two different sides, so its rear view only
+        ever shows its own rear image (or nothing, if none is set) - showing the front
+        picture there would misrepresent what's actually visible from the back. A
+        shallow device (e.g. a PDU) has no real "back" of its own; for those, the rear
+        view falls back to the front image, since that's usually the only picture that
+        exists and is still perfectly recognisable from either side.
         """
         device_type = self.device.device_type
         if device_type is None:
             return None
-        image = device_type.front_image if self.face == DeviceFaceChoices.FACE_FRONT else device_type.rear_image
-        return image if image else None
+        if self.face == DeviceFaceChoices.FACE_FRONT:
+            return device_type.front_image or None
+        if self.device.effective_full_depth:
+            return device_type.rear_image or None
+        return device_type.rear_image or device_type.front_image or None
 
 
 class Elevation:
