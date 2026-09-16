@@ -542,6 +542,14 @@ class ConceptComponent(NetBoxModel):
     def is_connected(self):
         return self.cable is not None
 
+    @property
+    def peer(self):
+        """The component on the other end of this component's cable, if any."""
+        cable = self.cable
+        if cable is None:
+            return None
+        return cable.termination_b if cable.termination_a_id == self.pk else cable.termination_a
+
     def get_paired_components(self):
         """
         For a front or rear port, the port(s) on the other side it passes through to -

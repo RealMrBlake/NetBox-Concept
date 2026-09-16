@@ -115,8 +115,21 @@ class ConceptComponentTable(NetBoxTable):
     concept = tables.Column(accessor='device__concept', linkify=True, verbose_name=_('Concept'))
     component_type = columns.ChoiceFieldColumn()
     color = columns.ColorColumn()
-    connection = tables.Column(
-        accessor='cable', linkify=True, orderable=False, verbose_name=_('Connection'), empty_values=()
+    connection = tables.TemplateColumn(
+        template_code="""
+            {% with peer=record.peer %}
+              {% if peer %}
+                <a href="{{ peer.device.get_absolute_url }}">{{ peer.device }}</a>
+                <i class="mdi mdi-chevron-right"></i>
+                <a href="{{ peer.get_absolute_url }}">{{ peer }}</a>
+              {% else %}
+                {{ ''|placeholder }}
+              {% endif %}
+            {% endwith %}
+        """,
+        verbose_name=_('Connection'),
+        orderable=False,
+        empty_values=()
     )
     connect = tables.TemplateColumn(
         template_code="""
@@ -138,9 +151,6 @@ class ConceptComponentTable(NetBoxTable):
             'connection', 'connect', 'description', 'tags', 'created', 'last_updated',
         )
         default_columns = ('name', 'device', 'component_type', 'port_type', 'connection', 'connect')
-
-    def render_connection(self, value, record):
-        return value if value else _('Not connected')
 
 
 class ConceptCableTable(NetBoxTable):

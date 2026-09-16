@@ -91,13 +91,7 @@
           </tr>
           <tr>
             <th scope="row">{% trans "Connected to" %}</th>
-            <td>
-              {% if cable.termination_a_id == object.pk %}
-                {{ cable.termination_b.device|linkify }} &middot; {{ cable.termination_b|linkify }}
-              {% else %}
-                {{ cable.termination_a.device|linkify }} &middot; {{ cable.termination_a|linkify }}
-              {% endif %}
-            </td>
+            <td>{{ object.peer.device|linkify }} &middot; {{ object.peer|linkify }}</td>
           </tr>
         </table>
       {% else %}
