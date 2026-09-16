@@ -113,10 +113,18 @@
         return Math.min(Math.max(value, min), max);
     }
 
+    /* Which .concept-elevation panel (front or rear) the pointer is currently over -
+       used at drop time to tell whether a device was dragged onto the other face. */
+    function panelAt(clientX, clientY) {
+        const el = document.elementFromPoint(clientX, clientY);
+        return el ? el.closest('.concept-elevation') : null;
+    }
+
     container.querySelectorAll('.concept-elevation').forEach(function (panel) {
         const svg = panel.querySelector('svg');
         const geo = geometry(svg);
         if (!geo) return;
+        const sourceFace = panel.dataset.face;
 
         panel.querySelectorAll('.device-block:not(.opposite)').forEach(function (block) {
             block.addEventListener('pointerdown', onPointerDown);
@@ -139,6 +147,11 @@
                 let dy = 0;
 
                 block.classList.add('dragging');
+                // Without this, elementFromPoint() at drop time would always hit the
+                // dragged block itself (it's what's rendered under the cursor), never
+                // whatever panel is actually underneath it - pointer capture (below)
+                // keeps move/up events coming to `block` regardless, so this is safe.
+                block.style.pointerEvents = 'none';
                 block.setPointerCapture(event.pointerId);
 
                 function onMove(moveEvent) {
@@ -152,11 +165,12 @@
                     block.setAttribute('transform', 'translate(' + dx + ' ' + snappedY + ')');
                 }
 
-                function onUp() {
+                function onUp(upEvent) {
                     block.removeEventListener('pointermove', onMove);
                     block.removeEventListener('pointerup', onUp);
                     block.removeEventListener('pointercancel', onUp);
                     block.classList.remove('dragging');
+                    block.style.pointerEvents = '';
 
                     if (!moved) {
                         // Treat it as a click: follow the device link.
@@ -165,6 +179,14 @@
                         if (link) window.location = link.getAttribute('href');
                         return;
                     }
+
+                    // Front and rear share one coordinate system (same UNIT_HEIGHT,
+                    // RACK_X, ...), just placed side by side on screen - the delta
+                    // computed against the source panel is equally valid whichever
+                    // panel the pointer ends up over, so dropping onto the other face
+                    // only needs to swap which face gets submitted.
+                    const targetPanel = panelAt(upEvent.clientX, upEvent.clientY);
+                    const targetFace = (targetPanel && targetPanel.dataset.face) || sourceFace;
 
                     const unitDelta = Math.round(dy / geo.unitHeight) * (descUnits ? 1 : -1);
                     const lowest = startingUnit;
@@ -180,7 +202,8 @@
                         );
                     }
 
-                    submit(block, newPosition, fraction > 1 ? horizontal : null);
+                    submit(block, newPosition, fraction > 1 ? horizontal : null,
+                        targetFace !== sourceFace ? targetFace : null);
                 }
 
                 block.addEventListener('pointermove', onMove);
@@ -190,13 +213,16 @@
         });
     });
 
-    function submit(block, position, horizontalPosition) {
+    function submit(block, position, horizontalPosition, face) {
         const move = {
             id: parseInt(block.dataset.deviceId, 10),
             position: position
         };
         if (horizontalPosition !== null) {
             move.horizontal_position = horizontalPosition;
+        }
+        if (face) {
+            move.face = face;
         }
 
         setStatus('Saving…', false);

@@ -21,8 +21,10 @@ Wenn die Planung steht, wird das Konzept per Knopfdruck in echte NetBox-Objekte
 
 Dazu:
 
-* **Elevation mit Drag & Drop** – Geräte per Maus verschieben, serverseitig validiert.
-  Ein ungültiger Zug wird abgelehnt und ändert nichts.
+* **Elevation mit Drag & Drop** – Geräte per Maus verschieben, auch von der
+  Front- in die Rear-Ansicht ziehen (und umgekehrt), um sie auf die andere Seite
+  umzuhängen. Alles serverseitig validiert; ein ungültiger Zug wird abgelehnt und
+  ändert nichts.
 * **Geräte mit Bild und Text** – ist am Gerätetyp ein Front-/Rear-Bild hinterlegt, wird
   es im Elevation-Block angezeigt; darüber liegt der Gerätename als weiße, schwarz
   konturierte Schrift (kein dunkler Balken). Ein Dropdown über der Elevation schaltet

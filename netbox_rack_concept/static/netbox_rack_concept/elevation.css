@@ -10,6 +10,10 @@
     height: auto;
     user-select: none;
     touch-action: none;
+    /* A device being dragged toward the other face's panel shouldn't just vanish the
+       moment it crosses this SVG's own edge - let it render past the boundary while
+       it's mid-drag, into whatever sits next to it (the other panel, side by side). */
+    overflow: visible;
 }
 
 .concept-elevation .unit-slot {

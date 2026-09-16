@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.2
+
+- Drag-and-drop now supports dragging a device from the front elevation onto the rear
+  one (and back), reassigning its face. Front and rear share one coordinate system
+  (same unit height, rack offset, ...), just placed side by side on screen, so the
+  existing delta-based drag math is already valid for a cross-panel drop - only the
+  target face needed detecting (via `elementFromPoint` at drop time) and sending along.
+  Fixed a related bug along the way: without `pointer-events: none` on the dragged
+  block during the drag, `elementFromPoint` would always hit the dragged block itself
+  rather than the panel underneath, so the cross-face drop would never have been
+  detected; pointer capture keeps delivering move/up events to it regardless.
+
 ## 0.2.1
 
 - Rework PNG export: instead of rasterizing the SVG export via `<img>`/`<canvas>`

@@ -340,9 +340,6 @@ msgstr "Geräte"
 msgid "Dimensions"
 msgstr "Abmessungen"
 
-msgid "Drag devices to move them"
-msgstr "Geräte zum Verschieben ziehen"
-
 msgid "Draw.io (.drawio)"
 msgstr "Draw.io (.drawio)"
 
@@ -926,3 +923,8 @@ msgid "{{ counter }} planned device will be created per rack."
 msgid_plural "{{ counter }} planned devices will be created per rack."
 msgstr[0] "Pro Rack wird {{ counter }} geplantes Gerät angelegt."
 msgstr[1] "Pro Rack werden {{ counter }} geplante Geräte angelegt."
+
+msgid "Drag devices to move or flip them between front and rear"
+msgstr ""
+"Geräte ziehen, um sie zu verschieben oder zwischen Front und Rückseite zu "
+"wechseln"
