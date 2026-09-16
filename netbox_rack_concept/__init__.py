@@ -12,8 +12,10 @@ class RackConceptConfig(PluginConfig):
     base_url = 'rack-concepts'
     min_version = '4.6.0'
     max_version = '4.6.99'
-    menu = 'netbox_rack_concept.navigation.menu'
-    template_extensions = 'netbox_rack_concept.template_content.template_extensions'
+    # These paths are relative to this module (NetBox prepends self.__module__),
+    # so they must NOT be prefixed with 'netbox_rack_concept.' again.
+    menu = 'navigation.menu'
+    template_extensions = 'template_content.template_extensions'
 
     default_settings = {
         # Defaults used when a concept is created from scratch.
