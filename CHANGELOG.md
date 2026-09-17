@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.2.4
+
+- Verified compatibility with NetBox 4.7.1 and raised `max_version` to `4.7.99`
+  accordingly (was `4.6.99`). Checked every area 4.7's release notes call out as
+  breaking or plugin-relevant against the actual 4.7.1 source: the `Rack` model's
+  `form_factor`/`width`/`airflow`/`outer_*` fields (deprecated, not removed),
+  `ChoiceSet`'s `Choice`-object refactor (the legacy `(value, label, color)` tuple
+  format this plugin's own choices use is explicitly still supported),
+  `register_model_view`/`ViewTab`/`get_model_urls`, `PluginConfig` resource-path
+  resolution, `PortTemplateMapping`/`PortMappingBase` (the patch-panel front/rear
+  mapping this plugin's component sync reads), `Cable`/`CableTermination`/
+  `CabledObjectModel` (the rack-import cable copy), and the `NetBoxModel*`/
+  `PluginMenu*`/`ColorField`/`DynamicModelChoiceField` base classes. No code changes
+  were needed - django-tables2's `RelatedLinkColumn` removal and the removed
+  `querystring` tag don't apply (unused), and the MPTT→ltree migration doesn't touch
+  anything this plugin manipulates directly.
+
 ## 0.2.3
 
 - Fix: dragging a device from front to rear (or back) made it invisible mid-drag - it

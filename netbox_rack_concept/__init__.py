@@ -1,6 +1,6 @@
 from netbox.plugins import PluginConfig
 
-__version__ = '0.2.3'
+__version__ = '0.2.4'
 
 
 class RackConceptConfig(PluginConfig):
@@ -11,7 +11,12 @@ class RackConceptConfig(PluginConfig):
     author = 'Claude'
     base_url = 'rack-concepts'
     min_version = '4.6.0'
-    max_version = '4.6.99'
+    # Verified against the real 4.7.1 source: RackBase/Rack fields, PortTemplateMapping,
+    # Cable/CableTermination, register_model_view/ViewTab, NetBoxModel*, ChoiceSet
+    # (its CHOICES refactor explicitly keeps supporting the legacy (value, label, color)
+    # tuple format this plugin uses) are all unchanged or additive. No 4.8 exists yet to
+    # verify against, so the ceiling stops at the 4.7 line rather than guessing further.
+    max_version = '4.7.99'
     # These paths are relative to this module (NetBox prepends self.__module__),
     # so they must NOT be prefixed with 'netbox_rack_concept.' again.
     menu = 'navigation.menu'

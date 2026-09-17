@@ -1,6 +1,6 @@
 # netbox-rack-concept
 
-Rack-Blaupausen für NetBox 4.6. Ein „Rack Konzept" ist ein vollständig geplantes Rack
+Rack-Blaupausen für NetBox 4.6 und 4.7. Ein „Rack Konzept" ist ein vollständig geplantes Rack
 samt Einbauten — aber **kein** echtes Rack und **keine** echten Geräte. Konzepte tauchen
 deshalb weder in der Rack-Liste noch in der Geräte-Liste auf, verfälschen keine
 Auslastungs-Auswertungen und belegen keine Seriennummern oder IP-Adressen.
