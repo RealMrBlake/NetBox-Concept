@@ -1,242 +1,239 @@
-# netbox-rack-concept
+# NetBox Rack Concept
 
-Rack-Blaupausen für NetBox 4.6 und 4.7. Ein „Rack Konzept" ist ein vollständig geplantes Rack
-samt Einbauten — aber **kein** echtes Rack und **keine** echten Geräte. Konzepte tauchen
-deshalb weder in der Rack-Liste noch in der Geräte-Liste auf, verfälschen keine
-Auslastungs-Auswertungen und belegen keine Seriennummern oder IP-Adressen.
+Rack blueprints for NetBox. A "rack concept" is a fully planned rack including
+its equipment — but **not** a real rack and **no** real devices. Concepts
+therefore appear neither in the rack list nor in the device list, do not skew
+utilisation reports and do not consume serial numbers or IP addresses.
 
-Wenn die Planung steht, wird das Konzept per Knopfdruck in echte NetBox-Objekte
-überführt — ein Mal oder gleich zwanzig Mal.
+Once the plan is final, a concept is turned into real NetBox objects with one
+click — once or twenty times.
 
-## Was das Plugin kann
-
-| Weg | Wo |
+| | |
 |---|---|
-| Echtes Rack → Konzept | Button **„Copy to concept"** auf der Rack-Detailseite. Größe des Konzept-Racks (Breite, Höhe, Startunit) ist dabei frei wählbar; Geräte, die in der gewählten Größe keinen Platz mehr finden, werden ausgelassen und als Warnung gemeldet |
-| Konzept → Konzept (Variante) | Button **„Clone concept"** auf der Konzept-Detailseite |
-| 2 Konzepte → 1 größeres Konzept | Button **„Merge"** im Menü bzw. **„Merge with another"** auf der Konzept-Detailseite — stapelt z.B. zwei halbhohe Racks zu einem vollen; das obere Konzept wird um die Höhe des unteren nach oben verschoben, beide Quellen bleiben unverändert |
-| 2 echte Racks → 1 neues Konzept | Button **„Merge into concept"** über der echten Rack-Liste. Zwei Racks per Checkbox auswählen (wie bei jeder anderen Bulk-Aktion) und auf den Button klicken — vorausgefüllt landet man auf derselben Merge-Maske wie oben, diesmal direkt mit den zwei echten Racks als Quelle |
-| Konzept → echte Racks (n-fach) | Button **„Deploy to NetBox"**, mit Namensschema `DC1-R{n:02d}` |
-| Konzept von Hand anlegen | Menü **Rack Concepts → Rack Concepts → +** |
+| **Plugin name** | `netbox_rack_concept` |
+| **Package** | `netbox-rack-concept` |
+| **NetBox** | `4.6.0` – `4.7.x` |
+| **Python** | `>=3.12` |
+| **Repository** | <https://git.mrblake.cc/MrBlake/NetBox-Concept> |
 
-Dazu:
+## Features
 
-* **Elevation mit Drag & Drop** – Geräte per Maus verschieben, auch von der
-  Front- in die Rear-Ansicht ziehen (und umgekehrt), um sie auf die andere Seite
-  umzuhängen. Alles serverseitig validiert; ein ungültiger Zug wird abgelehnt und
-  ändert nichts.
-* **Geräte mit Bild und Text** – ist am Gerätetyp ein Front-/Rear-Bild hinterlegt, wird
-  es im Elevation-Block angezeigt; darüber liegt der Gerätename als weiße, schwarz
-  konturierte Schrift (kein dunkler Balken). Auf der Rear-Seite zeigt ein **volltiefes**
-  Gerät nur sein eigenes Rear-Bild (oder gar keins); ein **nicht volltiefes** Gerät ohne
-  eigenes Rear-Bild (z.B. eine Steckdosenleiste) zeigt dort stattdessen sein Front-Bild.
-  Ein Dropdown über der Elevation schaltet zwischen „Images and labels", „Images only"
-  und „Labels only" um — genau wie bei echten Racks in NetBox, inklusive Merken der
-  Wahl im Browser.
-* **Teilbreiten** (1/1, 1/2, 1/3, 1/4 plus horizontale Slot-Position), passend zum
-  Teilbreiten-Feature von `netbox_utilities`.
-* **Mandant und Mandantengruppe** an Konzept und an jedem geplanten Gerät.
-* **Platzhalter ohne Gerätetyp** – reservierter Bauraum, nur mit Höhenangabe.
-* **Klick auf eine leere HE** öffnet direkt „Add planned device", vorausgefüllt mit
-  Position und Seite — genau wie bei einer echten Rack-Elevation. Den separaten
-  „Add planned device"-Knopf gibt es dafür nicht mehr.
-* **Verkabelung von Konzept-Geräten, 1:1 wie bei echten Geräten** – auf der
-  Geräte-Detailseite gibt es dieselben Tabs wie bei einem echten `dcim.Device`:
-  Interfaces, Front Ports, Rear Ports, Console Ports, Console Server Ports, Power
-  Ports, Power Outlets (gleiche Namen, gleiche Reihenfolge, Tab nur sichtbar wenn
-  belegt). „Sync components" übernimmt sie 1:1 aus den Component-Templates des
-  Gerätetyps, inkl. Front-↔Rear-Zuordnung von Patchpanels. Über „Connect" an jeder
-  unverkabelten Komponente wird sie mit einem Concept Cable verbunden. Ein „Add
-  Components"-Dropdown (genau wie am echten Gerät) legt neue Komponenten pro Typ an —
-  nötig für Platzhalter ohne Gerätetyp, die nichts zum Syncen haben.
-* **Export** – Button **„Export"** über der Elevation: Front bzw. Rear jeweils als
-  eigenständige **SVG**-Datei, als **PNG** (einzeln oder beide Seiten zusammen), sowie
-  das ganze Konzept als **Draw.io**-Diagramm (`.drawio`, per Datei > Öffnen oder Extras
-  > Diagramm bearbeiten in diagrams.net einlesbar). PNG wird direkt im Browser auf ein
-  `<canvas>` gezeichnet (derselbe Ansatz wie bei netbox-topology-views) statt ein SVG zu
-  rastern — Gerätetyp-Bilder werden dafür einzeln per `fetch()` als Blob geladen; scheitert
-  eines davon (z.B. Netzwerkfehler), fehlt nur dieses eine Bild im Export, der Rest bleibt
-  unversehrt. Für PNG ist keine zusätzliche Bildbibliothek auf dem Server nötig.
-* Vollständige REST-API, Filter, CSV-Import/-Export, Bulk-Edit, Changelog, Journal,
-  Tags, Custom Fields und globale Suche — wie bei jedem Core-Objekt.
+| Workflow | Where |
+|---|---|
+| Real rack → concept | **Copy to concept** button on the rack detail page. Width, height and starting unit of the concept rack are freely selectable; devices that no longer fit are skipped and reported as warnings |
+| Concept → concept (variant) | **Clone concept** button on the concept detail page |
+| 2 concepts → 1 larger concept | **Merge** in the menu or **Merge with another** on the concept detail page — e.g. stacks two half-height racks into a full one; the top concept is shifted up by the height of the bottom one, both sources stay unchanged |
+| 2 real racks → 1 new concept | **Merge into concept** above the real rack list. Select two racks via checkbox and click the button — you land on the same merge form, pre-filled with the two real racks as sources |
+| Concept → real racks (n times) | **Deploy to NetBox** button, with naming scheme `DC1-R{n:02d}` |
+| Create a concept manually | Menu **Rack Concepts → Rack Concepts → +** |
 
-## Verkabelung
+In addition:
 
-Konzept-Geräte lassen sich verkabeln, aber **nicht** über NetBox' echtes `dcim.Cable` —
-das kann nur echte `dcim`-Komponenten verbinden. Stattdessen bringt das Plugin ein
-eigenes, schlankes Modellpaar mit:
+- **Drag & drop elevation** – move devices with the mouse, including from the front to the rear view (and vice versa). Everything is validated server-side; an invalid move is rejected and changes nothing.
+- **Devices with image and label** – device type front/rear images are shown in the elevation with the device name as white, black-outlined text. On the rear, a **full-depth** device only shows its own rear image; a **non-full-depth** device without a rear image (e.g. a power strip) shows its front image. A dropdown switches between "Images and labels", "Images only" and "Labels only" — just like real racks in NetBox, remembered in the browser.
+- **Partial widths** (1/1, 1/2, 1/3, 1/4 plus horizontal slot position), matching the partial-width feature of `netbox_utilities`.
+- **Tenant and tenant group** on the concept and on every planned device.
+- **Placeholders without device type** – reserved space with only a height.
+- **Click on an empty U** opens "Add planned device", pre-filled with position and face — just like a real rack elevation.
+- **Cabling of concept devices, 1:1 like real devices** – the device detail page has the same tabs as a real `dcim.Device` (interfaces, front/rear ports, console ports, console server ports, power ports, power outlets; tabs only shown when populated). **Sync components** copies them 1:1 from the device type's component templates, including front ↔ rear mapping of patch panels. **Connect** on every uncabled component creates a concept cable. An **Add Components** dropdown creates new components per type — needed for placeholders without a device type.
+- **Export** – **Export** button above the elevation: front or rear as standalone **SVG**, as **PNG** (single or both sides), and the whole concept as a **draw.io** diagram (`.drawio`). PNG is drawn directly on a `<canvas>` in the browser; device type images are fetched individually, so a failing image only affects that one image. No server-side image library is needed.
+- Full REST API, filters, CSV import/export, bulk edit, changelog, journal, tags, custom fields and global search — like any core object.
 
-* **ConceptComponent** — ein Interface, Front-/Rear-Port, Power-Port/-Outlet oder
-  Console-Port an einem geplanten Gerät. Über **„Sync components"** auf der
-  Geräte-Seite werden sie 1:1 aus den Component-Templates des Gerätetyps erzeugt
-  (Name, Label, Typ, Positionen) — wiederholbar, ohne Duplikate oder Datenverlust an
-  bereits verkabelten Komponenten. Ein Gerät ohne Gerätetyp (Platzhalter) hat keine
-  Templates zum Syncen; seine Komponenten legt man über **„Add component"** von Hand an.
-* **ConceptCable** — verbindet zwei `ConceptComponent`s. Beide Enden müssen zu Geräten
-  im selben Rack-Konzept gehören; eine Komponente kann nur in einem Kabel gleichzeitig
-  stecken. Erreichbar über **„Connect"** an jeder unverkabelten Komponente.
+## Compatibility
 
-**Patchpanels funktionieren genauso wie bei echten Geräten**, weil das Plugin exakt
-dieselbe Front-↔Rear-Zuordnung ausliest, die NetBox selbst am Gerätetyp pflegt (über
-`PortTemplateMapping`, dieselbe Tabelle, die auch echte `FrontPort`/`RearPort`-Objekte
-verknüpft). Das hängt also nicht an der Rollenbezeichnung „Patchpanel", sondern schlicht
-daran, ob der Gerätetyp Front-/Rear-Ports mit Zuordnung definiert — Kabel an der
-Vorderseite eines synchronisierten Patchpanel-Gerätetyps zeigen auf der Detailseite der
-Komponente sofort den passenden Rear-Port samt Position an.
-
-**Beim Kopieren eines echten Racks in ein Konzept** (und beim Zusammenführen zweier
-echter Racks, siehe unten) werden die Komponenten aller übernommenen Geräte automatisch
-synchronisiert, und jedes echte Kabel, dessen **beide** Enden innerhalb der kopierten
-Rack(s) liegen, wird als `ConceptCable` nachgebaut — Status, Typ, Farbe und Label
-inklusive. Kabel, die den Rack verlassen (zum Beispiel zum Uplink-Switch in einem
-anderen Rack), lassen sich naturgemäß nicht übernehmen, weil das Gegenstück nicht Teil
-des Konzepts ist; ebenso ausgelassen werden Mehrfach-Trunk-Kabel (z.B. MPO), da
-`ConceptCable` nur Punkt-zu-Punkt-Verbindungen kennt. Beides wird nach dem Kopieren als
-Warnung mit Anzahl gemeldet. Das Nachbilden der Verkabelung gilt nur für den Import
-**echter** Racks — beim Klonen oder Zusammenführen von Konzepten (die ja schon eigene
-Kabel haben können) bleibt die Verkabelung unverändert, wie bisher.
-
-## Zusammenspiel mit den anderen Plugins
-
-**netbox-reorder-rack (rackorder)** arbeitet auf `dcim.Device`-Querysets. Ein Konzept hat
-per Definition keine, also bringt dieses Plugin eine eigene Drag-&-Drop-Elevation mit
-(`static/netbox_rack_concept/elevation.js`). Sobald ein Konzept ausgerollt ist, ist das
-Ergebnis ein ganz normales Rack — ab da greift reorder-rack wie gewohnt.
-
-> Hinweis zur Version: `netbox-reorder-rack` **v1.1.5 setzt NetBox 4.7 voraus**. Für
-> NetBox 4.6.8 die letzte 4.6-taugliche Version pinnen (`netbox-reorder-rack<1.1.5`).
-
-**netbox_utilities** liefert die Teilbreiten für echte Geräte. Beim Ausrollen schreibt
-dieses Plugin die Werte `width_fraction` und `horizontal_position` dorthin zurück; beim
-Kopieren eines echten Racks liest es sie von dort. Da die Feldnamen von `netbox_utilities`
-nicht öffentlich dokumentiert sind, stehen sie in `PLUGINS_CONFIG` (siehe unten) und
-lassen sich ohne Code-Änderung anpassen. Ist `netbox_utilities` nicht installiert oder
-passt das Mapping nicht, werden Teilbreiten schlicht nicht geschrieben — alles andere
-funktioniert weiter, und es landet eine Warnung im NetBox-Log.
+- NetBox `4.6.0` – `4.7.x`
+- Python `>=3.12`
+- Optional: [Netbox-Utilities](https://git.mrblake.cc/MrBlake/Netbox-Utilities) for partial widths
+- Optional: `netbox-reorder-rack` — **v1.1.5 requires NetBox 4.7**; on NetBox 4.6 pin `netbox-reorder-rack<1.1.5`
 
 ## Installation
 
-### Per pip direkt aus Git
+All paths assume a standard installation under `/opt/netbox`.
+
+### 1. Install the package
 
 ```bash
-source /opt/netbox/venv/bin/activate
-pip install git+https://git.mrblake.cc/MrBlake/NetBox-Concept.git
+/opt/netbox/venv/bin/pip install --upgrade --force-reinstall \
+  "git+https://git.mrblake.cc/MrBlake/NetBox-Concept.git@main"
 ```
 
-Für eine bestimmte Version oder einen Branch/Commit `@<ref>` anhängen, z.B.:
+For reproducible production installs, replace `main` with a release tag or a
+full commit ID.
+
+### 2. Add the plugin to `local_requirements.txt`
+
+This makes `upgrade.sh` reinstall the plugin automatically on every NetBox upgrade:
 
 ```bash
-pip install git+https://git.mrblake.cc/MrBlake/NetBox-Concept.git@v0.1.0
+grep -qxF "git+https://git.mrblake.cc/MrBlake/NetBox-Concept.git@main" /opt/netbox/local_requirements.txt \
+  || echo "git+https://git.mrblake.cc/MrBlake/NetBox-Concept.git@main" | sudo tee -a /opt/netbox/local_requirements.txt
 ```
 
-Damit die Installation auch nach einem `upgrade.sh`/`python3 -m pip install -r
-requirements.txt`-Lauf erhalten bleibt, den Eintrag zusätzlich in
-`/opt/netbox/local_requirements.txt` aufnehmen:
+If the repository is private, the NetBox server needs a read-only deploy token
+or an SSH key. Do not store credentials in `local_requirements.txt`.
 
-```
-git+https://git.mrblake.cc/MrBlake/NetBox-Concept.git
-```
+### 3. Enable the plugin
 
-### Aus lokalem Checkout
-
-```bash
-source /opt/netbox/venv/bin/activate
-pip install /pfad/zu/netbox-rack-concept
-```
-
-### Aktivieren
-
-In `configuration.py`:
+In `/opt/netbox/netbox/netbox/configuration.py`:
 
 ```python
 PLUGINS = [
-    'netbox_rack_concept',
-    # optional, in beliebiger Reihenfolge:
-    'netbox_utilities',
-    'netbox_reorder_rack',
+    "netbox_rack_concept",
+    # optional, in any order:
+    "netbox_utilities",
+    "netbox_reorder_rack",
 ]
 ```
 
-Dann:
+If other plugins are already configured, add `netbox_rack_concept` to the
+existing list instead of replacing it. See [Configuration](#configuration) for
+optional settings.
+
+### 4. Apply migrations, collect static files, restart
 
 ```bash
 cd /opt/netbox/netbox
-python manage.py migrate
-python manage.py collectstatic --no-input
+/opt/netbox/venv/bin/python manage.py migrate netbox_rack_concept
+/opt/netbox/venv/bin/python manage.py collectstatic --no-input
 sudo systemctl restart netbox netbox-rq
 ```
+
+> If `migrate` cannot apply the bundled migration because base fields differ in
+> your NetBox installation: delete `netbox_rack_concept/migrations/0001_initial.py`
+> and run `manage.py makemigrations netbox_rack_concept`. The migration was
+> written by hand against NetBox 4.6.8.
 
 ## Update
 
 ```bash
-source /opt/netbox/venv/bin/activate
-pip install --upgrade --force-reinstall --no-deps git+https://git.mrblake.cc/MrBlake/NetBox-Concept.git
+/opt/netbox/venv/bin/pip install --upgrade --force-reinstall --no-deps \
+  "git+https://git.mrblake.cc/MrBlake/NetBox-Concept.git@main"
+
 cd /opt/netbox/netbox
-python manage.py migrate
-python manage.py collectstatic --no-input
+/opt/netbox/venv/bin/python manage.py migrate netbox_rack_concept
+/opt/netbox/venv/bin/python manage.py collectstatic --no-input
 sudo systemctl restart netbox netbox-rq
 ```
 
-`--force-reinstall --no-deps` ist nötig, weil pip bei einer git-URL ohne Versionsänderung
-sonst annimmt, es sei nichts Neues zu holen. Wer stattdessen mit `local_requirements.txt`
-und `upgrade.sh` arbeitet, bekommt Updates darüber automatisch mit, sobald sich der
-referenzierte Branch/Tag ändert.
+`--force-reinstall` makes pip pick up branch changes even if the package
+version has not been bumped.
 
-> Sollte `migrate` die mitgelieferte Migration nicht anwenden können, weil sich in eurer
-> NetBox-Installation Basisfelder unterscheiden: `netbox_rack_concept/migrations/0001_initial.py`
-> löschen und `python manage.py makemigrations netbox_rack_concept` laufen lassen.
-> Die Migration ist von Hand geschrieben und gegen NetBox 4.6.8 erstellt, aber nicht in
-> eurer Umgebung getestet.
+When NetBox itself is upgraded, `upgrade.sh` reinstalls the plugin from
+`local_requirements.txt` and runs migrations and `collectstatic`:
 
-## Konfiguration
+```bash
+sudo /opt/netbox/upgrade.sh
+sudo systemctl restart netbox netbox-rq
+```
 
-Alle Werte sind optional; gezeigt sind die Defaults.
+## Uninstall
+
+1. Remove `"netbox_rack_concept"` from `PLUGINS` and `PLUGINS_CONFIG`.
+2. Remove the line from `/opt/netbox/local_requirements.txt`.
+3. Uninstall the package and restart NetBox:
+
+```bash
+/opt/netbox/venv/bin/pip uninstall netbox-rack-concept
+sudo systemctl restart netbox netbox-rq
+```
+
+## Configuration
+
+All values are optional; the defaults are shown.
 
 ```python
 PLUGINS_CONFIG = {
-    'netbox_rack_concept': {
-        # Vorbelegung beim Anlegen eines neuen Konzepts
-        'default_u_height': 42,
-        'default_width': 19,
+    "netbox_rack_concept": {
+        # Defaults when creating a new concept
+        "default_u_height": 42,
+        "default_width": 19,
 
-        # "Copy to concept"-Button auf der Rack-Seite anzeigen
-        'enable_rack_tab': True,
+        # Show the "Copy to concept" button on the rack page
+        "enable_rack_tab": True,
 
-        # Status der Objekte, die beim Ausrollen entstehen
-        'deployed_rack_status': 'planned',
-        'deployed_device_status': 'planned',
+        # Status of objects created on deployment
+        "deployed_rack_status": "planned",
+        "deployed_device_status": "planned",
 
-        # Anbindung an die Teilbreiten von netbox_utilities.
-        # 'model' leer lassen, wenn netbox_utilities die Felder direkt an dcim.Device hängt.
-        'partial_width': {
-            'enabled': True,
-            'model': 'netbox_utilities.RackDevicePosition',
-            'device_field': 'device',
-            'fraction_field': 'width_fraction',
-            'position_field': 'horizontal_position',
+        # Link to the partial widths of netbox_utilities.
+        # Leave "model" empty if netbox_utilities stores the fields on dcim.Device directly.
+        "partial_width": {
+            "enabled": True,
+            "model": "netbox_utilities.RackDevicePosition",
+            "device_field": "device",
+            "fraction_field": "width_fraction",
+            "position_field": "horizontal_position",
         },
-    }
+    },
 }
 ```
 
-## REST-API
+## Usage
 
-Basis-Pfad: `/api/plugins/rack-concepts/`
+### Cabling
 
-| Methode | Endpunkt | Zweck |
+Concept devices can be cabled, but **not** via NetBox's real `dcim.Cable`,
+which can only connect real `dcim` components. Instead the plugin ships its own
+lightweight model pair:
+
+- **ConceptComponent** — an interface, front/rear port, power port/outlet or
+  console port on a planned device. **Sync components** creates them 1:1 from
+  the device type's component templates (name, label, type, positions) —
+  repeatable, without duplicates or data loss on already cabled components.
+  Placeholders without a device type get components via **Add component**.
+- **ConceptCable** — connects two `ConceptComponent`s. Both ends must belong to
+  devices in the same rack concept; a component can only be in one cable at a time.
+
+**Patch panels work exactly like real devices**, because the plugin reads the
+same front ↔ rear mapping NetBox maintains on the device type
+(`PortTemplateMapping`). It does not depend on the role name "Patchpanel" but on
+whether the device type defines front/rear ports with a mapping.
+
+**When copying a real rack into a concept** (and when merging two real racks),
+components of all copied devices are synced automatically, and every real cable
+whose **both** ends lie within the copied rack(s) is recreated as a
+`ConceptCable` — including status, type, colour and label. Cables leaving the
+rack and multi-trunk cables (e.g. MPO) cannot be taken over and are reported as
+warnings with a count. Cloning or merging concepts leaves cabling unchanged.
+
+### Interaction with other plugins
+
+**netbox-reorder-rack** works on `dcim.Device` querysets. A concept has none by
+definition, so this plugin ships its own drag & drop elevation
+(`static/netbox_rack_concept/elevation.js`). Once deployed, the result is a
+normal rack and reorder-rack applies as usual.
+
+**netbox_utilities** provides partial widths for real devices. On deployment,
+this plugin writes `width_fraction` and `horizontal_position` there; when
+copying a real rack it reads them. The field mapping is configurable in
+`PLUGINS_CONFIG`. If `netbox_utilities` is not installed or the mapping does not
+match, partial widths are simply not written and a warning is logged.
+
+### What is not deployed
+
+A concept describes space, not operational data. Intentionally **not** created:
+cables, interfaces beyond the device type templates, IP addresses, serial
+numbers, asset tags. Planned devices without a role, device type or position are
+skipped — the confirmation page lists them before deployment.
+
+### REST API
+
+Base path: `/api/plugins/rack-concepts/`
+
+| Method | Endpoint | Purpose |
 |---|---|---|
-| `GET/POST` | `concepts/` | Konzepte auflisten und anlegen |
-| `GET/PATCH/DELETE` | `concepts/{id}/` | Einzelnes Konzept |
-| `POST` | `concepts/copy-from-rack/` | Echtes Rack in ein Konzept kopieren (mit `override_width`/`override_u_height`/`override_starting_unit`) |
-| `POST` | `concepts/{id}/clone/` | Konzept duplizieren |
-| `POST` | `concepts/merge/` | Zwei Konzepte zu einem größeren stapeln (`concept_bottom`, `concept_top`) |
-| `POST` | `concepts/{id}/deploy/` | Konzept ausrollen (`dry_run` möglich) |
-| `GET` | `concepts/{id}/elevation/` | Berechnete Elevation als JSON |
-| `GET/POST` | `devices/` | Geplante Geräte |
-| `GET/POST` | `components/` | Komponenten der geplanten Geräte |
-| `GET/POST` | `cables/` | Concept Cables |
+| `GET/POST` | `concepts/` | List and create concepts |
+| `GET/PATCH/DELETE` | `concepts/{id}/` | Single concept |
+| `POST` | `concepts/copy-from-rack/` | Copy a real rack into a concept (with `override_width`/`override_u_height`/`override_starting_unit`) |
+| `POST` | `concepts/{id}/clone/` | Duplicate a concept |
+| `POST` | `concepts/merge/` | Stack two concepts into a larger one (`concept_bottom`, `concept_top`) |
+| `POST` | `concepts/{id}/deploy/` | Deploy a concept (`dry_run` supported) |
+| `GET` | `concepts/{id}/elevation/` | Computed elevation as JSON |
+| `GET/POST` | `devices/` | Planned devices |
+| `GET/POST` | `components/` | Components of planned devices |
+| `GET/POST` | `cables/` | Concept cables |
 
-Beispiel — zehn Racks aus einem Konzept, erst als Trockenlauf:
+Example — ten racks from one concept, as a dry run first:
 
 ```bash
 curl -s -X POST https://netbox.example/api/plugins/rack-concepts/concepts/3/deploy/ \
@@ -254,7 +251,7 @@ curl -s -X POST https://netbox.example/api/plugins/rack-concepts/concepts/3/depl
       }'
 ```
 
-Antwort:
+Response:
 
 ```json
 {
@@ -262,33 +259,25 @@ Antwort:
   "racks": ["DC1-R01", "…", "DC1-R10"],
   "devices_per_rack": 7,
   "total_devices": 70,
-  "warnings": ["Blindplatte 3 has no role. NetBox requires one, so it will not be created."]
+  "warnings": ["Blanking panel 3 has no role. NetBox requires one, so it will not be created."]
 }
 ```
 
-`dry_run` auf `false` setzen, um es tatsächlich anzulegen. Das Ausrollen läuft in **einer**
-Transaktion: schlägt ein Rack oder ein Gerät fehl, wird gar nichts angelegt.
+Set `dry_run` to `false` to actually create the objects. Deployment runs in
+**one** transaction: if a rack or device fails, nothing is created.
 
-## Was beim Ausrollen nicht mitkommt
+### Permissions
 
-Ein Konzept beschreibt Bauraum, keine Betriebsdaten. Bewusst **nicht** erzeugt werden:
-Kabel, Interfaces jenseits der Device-Type-Templates, IP-Adressen, Seriennummern-Zwang,
-Asset-Tags. Geplante Geräte ohne Rolle, ohne Gerätetyp oder ohne Position werden
-übersprungen — welche das sind, zeigt die Bestätigungsseite vor dem Ausrollen an.
+Standard NetBox object permissions apply:
+`netbox_rack_concept.view_rackconcept`, `add_`, `change_`, `delete_` — and
+analogously for `conceptdevice`. Deployment additionally checks `dcim.add_rack`.
 
-## Sprache
+### Language
 
-Das Plugin ist auf Englisch (Quelltext) und Deutsch übersetzt. Beide Sprachen sind in
-NetBox bereits als Auswahl hinterlegt; die Anzeigesprache stellt man wie gewohnt über
-das Benutzerprofil (Preferences → Language) um — keine zusätzliche Konfiguration nötig.
-Die Übersetzung liegt unter `netbox_rack_concept/locale/de/LC_MESSAGES/`.
+The plugin is available in English (source) and German. Switch the display
+language as usual in the user profile (**Preferences → Language**). Translations
+live in `netbox_rack_concept/locale/de/LC_MESSAGES/`.
 
-## Berechtigungen
-
-Es gelten die normalen NetBox-Objektberechtigungen:
-`netbox_rack_concept.view_rackconcept`, `add_`, `change_`, `delete_` — analog für
-`conceptdevice`. Für das Ausrollen wird zusätzlich `dcim.add_rack` geprüft.
-
-## Lizenz
+## License
 
 MIT
