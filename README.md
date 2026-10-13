@@ -155,14 +155,15 @@ PLUGINS_CONFIG = {
         "deployed_rack_status": "planned",
         "deployed_device_status": "planned",
 
-        # Link to the partial widths of netbox_utilities.
-        # Leave "model" empty if netbox_utilities stores the fields on dcim.Device directly.
+        # Link to the partial widths of netbox_utilities (matches its DeviceRackPlacement model).
         "partial_width": {
             "enabled": True,
-            "model": "netbox_utilities.RackDevicePosition",
+            "model": "netbox_utilities.DeviceRackPlacement",
             "device_field": "device",
-            "fraction_field": "width_fraction",
+            "fraction_field": "width",
             "position_field": "horizontal_position",
+            # netbox_utilities counts positions from 1 (left); concepts count from 0.
+            "position_base": 1,
         },
     },
 }
@@ -204,9 +205,11 @@ definition, so this plugin ships its own drag & drop elevation
 normal rack and reorder-rack applies as usual.
 
 **netbox_utilities** provides partial widths for real devices. On deployment,
-this plugin writes `width_fraction` and `horizontal_position` there; when
-copying a real rack it reads them. The field mapping is configurable in
-`PLUGINS_CONFIG`. If `netbox_utilities` is not installed or the mapping does not
+this plugin writes the width and position to `netbox_utilities.DeviceRackPlacement`
+(staged before validation, so devices sharing a rack unit pass the collision check);
+when copying a real rack it reads them. The field mapping is configurable in
+`PLUGINS_CONFIG`; a configuration with the old, non-existent model name
+`netbox_utilities.RackDevicePosition` is migrated automatically. If `netbox_utilities` is not installed or the mapping does not
 match, partial widths are simply not written and a warning is logged.
 
 ### What is not deployed

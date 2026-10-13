@@ -24,6 +24,7 @@ __all__ = (
     'apply_partial_width',
     'get_partial_width_adapter',
     'read_partial_width',
+    'stage_partial_width',
     'reorder_rack_installed',
 )
 
@@ -46,13 +47,15 @@ class PartialWidthAdapter:
     either extra fields on dcim.Device, or a side model with a FK to the device.
     """
 
-    def __init__(self, model, device_field, fraction_field, position_field):
+    def __init__(self, model, device_field, fraction_field, position_field, position_base=0):
         self.model = model
         self.device_field = device_field
         self.fraction_field = fraction_field
         self.position_field = position_field
+        self.position_base = position_base
 
     def write(self, device, fraction, position):
+        position += self.position_base
         if self.model is None:
             # Fields live directly on the Device.
             setattr(device, self.fraction_field, fraction)
@@ -77,10 +80,24 @@ class PartialWidthAdapter:
         obj = self.model.objects.filter(**{self.device_field: device}).first()
         if obj is None:
             return None, None
-        return getattr(obj, self.fraction_field, None), getattr(obj, self.position_field, None)
+        position = getattr(obj, self.position_field, None)
+        if position is not None:
+            position = max(int(position) - self.position_base, 0)
+        return getattr(obj, self.fraction_field, None), position
 
 
 _ADAPTER_CACHE = {}
+
+# Defaults matching netbox_utilities.DeviceRackPlacement. Earlier versions of this plugin
+# shipped a model name that never existed; configurations copied from that are migrated.
+UTILITIES_PARTIAL_WIDTH = {
+    'model': 'netbox_utilities.DeviceRackPlacement',
+    'device_field': 'device',
+    'fraction_field': 'width',
+    'position_field': 'horizontal_position',
+    'position_base': 1,
+}
+LEGACY_PARTIAL_WIDTH_MODEL = 'netbox_utilities.RackDevicePosition'
 
 
 def get_partial_width_adapter():
@@ -90,10 +107,13 @@ def get_partial_width_adapter():
 
     adapter = None
     config = _config().get('partial_width') or {}
+    if config.get('model') == LEGACY_PARTIAL_WIDTH_MODEL:
+        config = {**config, **UTILITIES_PARTIAL_WIDTH}
 
     if config.get('enabled') and plugin_installed('netbox_utilities'):
-        fraction_field = config.get('fraction_field', 'width_fraction')
-        position_field = config.get('position_field', 'horizontal_position')
+        fraction_field = config.get('fraction_field', UTILITIES_PARTIAL_WIDTH['fraction_field'])
+        position_field = config.get('position_field', UTILITIES_PARTIAL_WIDTH['position_field'])
+        position_base = int(config.get('position_base', 0))
         model_path = config.get('model')
         model = None
 
@@ -119,11 +139,29 @@ def get_partial_width_adapter():
                 )
         else:
             adapter = PartialWidthAdapter(
-                model, config.get('device_field', 'device'), fraction_field, position_field
+                model, config.get('device_field', 'device'), fraction_field, position_field, position_base
             )
 
     _ADAPTER_CACHE['adapter'] = adapter
     return adapter
+
+
+def stage_partial_width(device, concept_device):
+    """
+    Announce the partial width of a not yet saved device to netbox_utilities, so that its
+    collision check treats devices sharing a rack unit side by side instead of overlapping.
+    """
+    if concept_device.width_fraction == 1 or get_partial_width_adapter() is None:
+        return False
+    try:
+        from netbox_utilities.rack_width import stage_width_position
+    except ImportError:
+        return False
+    adapter = get_partial_width_adapter()
+    stage_width_position(
+        device, concept_device.width_fraction, concept_device.horizontal_position + adapter.position_base
+    )
+    return True
 
 
 def apply_partial_width(device, concept_device):

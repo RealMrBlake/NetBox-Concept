@@ -12,7 +12,7 @@ from dcim.models import Device, Rack
 
 from . import components
 from .choices import ConceptDeviceStatusChoices, ConceptStatusChoices
-from .integrations import apply_partial_width, read_partial_width
+from .integrations import apply_partial_width, read_partial_width, stage_partial_width
 from .models import ConceptDeployment, ConceptDevice, RackConcept
 
 __all__ = (
@@ -452,6 +452,7 @@ def deploy_concept(concept, rack_names, site, location=None, tenant=None, create
                 serial=planned_device.serial,
                 description=planned_device.description,
             )
+            stage_partial_width(device, planned_device)
             device.full_clean()
             device.save()
             apply_partial_width(device, planned_device)

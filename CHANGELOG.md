@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.6
+
+- Fixed the partial-width integration with `netbox_utilities`. The default mapping pointed to a
+  model that never existed (`RackDevicePosition` / `width_fraction`), so partial widths were neither
+  read when copying a rack nor written when deploying. The plugin now uses
+  `netbox_utilities.DeviceRackPlacement` (`width`, `horizontal_position`), converts between the
+  0-based concept positions and the 1-based positions of `netbox_utilities`, and stages the width
+  before validation. Deploying several devices that share a rack unit no longer fails with
+  "already occupied". Configurations with the old model name are migrated automatically.
+- Verified with NetBox 4.7.2 and netbox_utilities 0.14.4.
+
 ## 0.2.5
 
 - Verified against NetBox 4.7.2 (Django 6.1).

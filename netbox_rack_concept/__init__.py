@@ -1,6 +1,6 @@
 from netbox.plugins import PluginConfig
 
-__version__ = '0.2.5'
+__version__ = '0.2.6'
 
 
 class RackConceptConfig(PluginConfig):
@@ -39,10 +39,12 @@ class RackConceptConfig(PluginConfig):
         # to never write partial-width data during deployment.
         'partial_width': {
             'enabled': True,
-            'model': 'netbox_utilities.RackDevicePosition',
+            'model': 'netbox_utilities.DeviceRackPlacement',
             'device_field': 'device',
-            'fraction_field': 'width_fraction',
+            'fraction_field': 'width',
             'position_field': 'horizontal_position',
+            # netbox_utilities counts positions from 1 (left); concepts count from 0.
+            'position_base': 1,
         },
     }
 
