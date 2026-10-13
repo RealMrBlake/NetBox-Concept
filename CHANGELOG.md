@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.5
+
+- Verified against NetBox 4.7.2 (Django 6.1).
+- Added migration `0003` that aligns the `ConceptPortMapping.id` column with the model (`BigAutoField`).
+
 ## 0.2.4
 
 - Verified compatibility with NetBox 4.7.1 and raised `max_version` to `4.7.99`
