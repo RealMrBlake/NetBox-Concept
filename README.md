@@ -16,6 +16,20 @@ click — once or twenty times.
 | **Python** | `>=3.12` |
 | **Repository** | <https://git.mrblake.cc/MrBlake/NetBox-Concept> |
 
+## Screenshots
+
+Concept detail page with drag & drop elevation:
+
+![Rack concept detail](docs/screenshots/concept-detail.png)
+
+Concept list:
+
+![Rack concepts](docs/screenshots/concepts.png)
+
+Concept cables between planned devices:
+
+![Concept cables](docs/screenshots/concept-cables.png)
+
 ## Features
 
 | Workflow | Where |
